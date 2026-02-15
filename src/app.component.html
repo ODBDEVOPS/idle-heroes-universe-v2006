@@ -1,0 +1,169 @@
+<div class="h-screen w-screen bg-gray-100 dark:bg-gray-900 flex flex-col font-roboto overflow-hidden relative">
+  <!-- Top Bar -->
+  <header class="h-16 flex-shrink-0 bg-gray-900/90 backdrop-blur-sm z-40 flex items-center justify-between px-2 sm:px-4 border-b border-purple-500/20 shadow-lg">
+    <!-- Left: Navigation -->
+    <div class="flex items-center gap-1 nav-container">
+      <!-- Home/Battle Button -->
+      <button (click)="changeView('combat')" class="p-2 rounded-md hover:bg-gray-700 transition-colors transform active:scale-95" [appTooltip]="'Battle Screen (Home)'">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-400" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 8c-1.65 0-3-1.35-3-3s1.35-3 3-3 3 1.35 3 3-1.35 3-3 3z" />
+        </svg>
+      </button>
+
+      <!-- Hero Command Button (Heroes & Progression) -->
+      <button (click)="changeView('heroCommand')" class="p-2 rounded-md hover:bg-gray-700 transition-colors transform active:scale-95" [appTooltip]="'Hero Command (Heroes & Progression)'">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+        </svg>
+      </button>
+
+      <!-- Inventory Hub Button (Inventory & Crafting) -->
+      <button (click)="changeView('inventoryHub')" class="p-2 rounded-md hover:bg-gray-700 transition-colors transform active:scale-95" [appTooltip]="'Inventory Hub (Inventory & Crafting)'">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-400" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M4 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM4 12a2 2 0 012-2h12a2 2 0 012 2v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5z" />
+        </svg>
+      </button>
+      
+      <!-- Base Command Button (Exploration & Quests) -->
+      <button (click)="changeView('base')" class="p-2 rounded-md hover:bg-gray-700 transition-colors transform active:scale-95" [appTooltip]="'Base Command (Exploration & Quests)'">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-lime-400" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      </button>
+
+      <!-- Shop Button (Economy & Social) -->
+      <button (click)="changeView('shop')" class="p-2 rounded-md hover:bg-gray-700 transition-colors transform active:scale-95" [appTooltip]="'Shop (Economy & Social)'">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-400" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z M12 12.5c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" />
+        </svg>
+      </button>
+
+      <!-- System & Settings Dropdown -->
+      <div class="relative">
+        <button (click)="toggleDropdown('system_settings')" class="p-2 rounded-md hover:bg-gray-700 transition-colors transform active:scale-95" [appTooltip]="'System & Settings'">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M10 20h4V4h-4v16zm-6 0h4V12H4v8zm12 0h4V12h-4v8zM12 10c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm-6 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm12 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z" />
+          </svg>
+        </button>
+        @if (openDropdown() === 'system_settings') {
+          <div class="absolute top-full left-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-md shadow-lg p-1 animate-modal-fade-in" style="animation-duration: 0.15s;">
+            <button (click)="changeView('codex')" class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-purple-600/50 transition-transform active:scale-95">Codex</button>
+            <button (click)="changeView('artifacts')" class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-purple-600/50 transition-transform active:scale-95">Artifacts</button>
+            <button (click)="changeView('settings')" class="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-purple-600/50 transition-transform active:scale-95">Settings</button>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Right: Resources -->
+    <div class="flex items-center gap-1 sm:gap-2">
+      <div class="bg-gray-900/70 px-2 sm:px-3 py-1 rounded-md border border-purple-500/30">
+        <h1 class="text-sm font-orbitron text-gray-300">Stage <span class="font-bold text-white">{{ gameService.gameState().stage }}</span></h1>
+      </div>
+       <div class="flex items-center gap-1.5 sm:gap-2.5 text-sm bg-black/30 px-2 sm:px-3 py-1 rounded-full border border-gray-700">
+        <span class="font-bold shimmer-text-gold flex items-center gap-0.5" [appTooltip]="'Gold'">💰<span class="hidden sm:inline">{{ formatNumber(gameService.gameState().gold) }}</span></span>
+        <span class="font-bold text-cyan-300 flex items-center gap-0.5" [appTooltip]="'Prestige Points'">💎<span class="hidden sm:inline">{{ formatNumber(gameService.gameState().prestigePoints) }}</span></span>
+        <span class="font-bold text-violet-400 flex items-center gap-0.5" [appTooltip]="'Rift Shards'">🌀<span class="hidden sm:inline">{{ formatNumber(gameService.gameState().riftShards) }}</span></span>
+        <span class="font-bold shimmer-text-gold flex items-center gap-0.5 hidden sm:flex" [appTooltip]="'Essence of Loyalty'">🌟<span class="hidden sm:inline">{{ formatNumber(gameService.gameState().essenceOfLoyalty) }}</span></span>
+        <span class="font-bold text-orange-300 flex items-center gap-0.5 hidden md:flex" [appTooltip]="'Tomes of Skill'">📚<span class="hidden sm:inline">{{ formatNumber(gameService.gameState().skillTomes) }}</span></span>
+        <span class="font-bold shimmer-text-purple flex items-center gap-0.5 hidden md:flex" [appTooltip]="'Enchanting Dust'">💧<span class="hidden sm:inline">{{ formatNumber(gameService.gameState().enchantingDust) }}</span></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-grow overflow-y-auto relative bg-gray-800">
+    @switch (activeView()) {
+      @case ('combat') { <app-combat [gameService]="gameService" /> }
+      @case ('team') { <app-team [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('quests') { <app-quests [gameService]="gameService" /> }
+      @case ('forge') { <app-forge [gameService]="gameService" /> }
+      @case ('summon') { <app-summon [gameService]="gameService" (heroUnlocked)="handleNewHeroUnlock($event)" /> }
+      @case ('tower') { <app-tower [gameService]="gameService" /> }
+      @case ('artifacts') { <app-artifacts [gameService]="gameService" /> }
+      @case ('codex') { <app-codex [gameService]="gameService" /> }
+      @case ('settings') { <app-settings [gameService]="gameService" /> }
+      @case ('inventory') { <app-inventory [gameService]="gameService" (viewChange)="changeView($event)"/> }
+      @case ('expeditions') { <app-expeditions [gameService]="gameService" /> }
+      @case ('celestialShrine') { <app-celestial-shrine [gameService]="gameService" /> }
+      @case ('synergies') { <app-synergies [gameService]="gameService" /> }
+      @case ('alchemyLab') { <app-alchemy-lab [gameService]="gameService" (viewChange)="changeView($event)"/> }
+      @case ('heroUnlock') { <app-hero-unlock [gameService]="gameService" [heroId]="heroToUnlockId()!" (viewChange)="changeView($event)" /> }
+      @case ('base') { <app-base [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('teamHub') { <app-team-hub [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('fusion') { <app-fusion [gameService]="gameService" /> }
+      @case ('heroDetail') { <app-hero-detail [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('reliques') { <app-reliques [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('dungeons') { <app-dungeons [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('leaderboard') { <app-leaderboard [gameService]="gameService" /> }
+      @case ('pets') { <app-pets [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('heroCommand') { <app-hero-command (viewChange)="changeView($event)" /> }
+      @case ('enchant') { <app-enchant [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('chronicle') { <app-chronicle [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('skillTraining') { <app-skill-training [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('skillTree') { <app-skill-tree [gameService]="gameService" /> }
+      @case ('heroFarm') { <app-hero-farm [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('professions') { <app-professions (viewChange)="changeView($event)" /> }
+      @case ('ingenierie') { <app-ingenierie [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('alchimie') { <app-alchimie [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('couture') { <app-couture [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('travailDuCuir') { <app-travail-du-cuir [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('cuisine') { <app-cuisine [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('peche') { <app-peche [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('depecage') { <app-depecage [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('herboristerie') { <app-herboristerie [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('minage') { <app-minage [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('heroSpecialization') { <app-hero-specialization [gameService]="gameService" (viewChange)="changeChange($event)" /> }
+      @case ('soulAlchemy') { <app-soul-alchemy [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('necroArtisanat') { <app-necro-artisanat [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('missions') { <app-missions [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('bijoutier') { <app-bijoutier [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('brewmaster') { <app-brewmaster [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('artisanArmes') { <app-artisan-armes [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('artisanArmures') { <app-artisan-armures [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('calligraphe') { <app-calligraphe [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('sculpteur') { <app-sculpteur [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('architecte') { <app-architecte [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('cartographe') { <app-cartographe [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('bucheron') { <app-bucheron [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('dimensionalRift') { <app-dimensional-rift [gameService]="gameService" (viewChange)="changeView($event)" /> }
+      @case ('guild') { <app-guild [gameService]="gameService" /> }
+      @case ('auctionHouse') { <app-auction-house [gameService]="gameService" /> }
+      @case ('upgrades') { <app-upgrades /> }
+      @case ('headquarters') { <app-headquarters /> }
+      @case ('inventoryHub') { <app-inventory-hub (viewChange)="changeView($event)" /> }
+      @case ('shop') { <app-shop [gameService]="gameService" (viewChange)="changeView($event)" /> }
+    }
+  </main>
+  
+  <!-- Global Modals -->
+  @if(showOfflineReport() && gameService.offlineReport(); as report) {
+      <div class="absolute inset-0 bg-black/70 flex items-center justify-center z-50 animate-modal-fade-in">
+          <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-sm p-6 border-2 border-purple-500 text-center">
+              <h2 class="text-2xl font-orbitron text-purple-400 mb-2">Welcome Back!</h2>
+              <p class="text-gray-300 mb-4">While you were away for {{ (report.seconds / 3600).toFixed(1) }} hours, your heroes earned:</p>
+              <div class="bg-gray-900/50 rounded-lg p-4 space-y-2">
+                  <p class="text-xl"><span class="font-semibold text-yellow-300">Gold:</span> 💰 {{ formatNumber(report.gold) }}</p>
+                  <p class="text-xl"><span class="font-semibold text-blue-300">XP:</span> ✨ {{ formatNumber(report.xp) }}</p>
+              </div>
+              <button (click)="claimOfflineReport()" class="mt-6 w-full py-2 bg-purple-600 text-white font-bold rounded-md hover:bg-purple-700 transition-colors transform active:scale-95">Claim</button>
+          </div>
+      </div>
+  }
+
+  @if(showDailyLogin()) {
+      <div class="absolute inset-0 bg-black/70 flex items-center justify-center z-50 animate-modal-fade-in">
+          <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-sm p-6 border-2 border-yellow-500 text-center">
+              <h2 class="text-2xl font-orbitron text-yellow-400 mb-2">Daily Login Reward</h2>
+              <p class="text-gray-300 mb-4">Thank you for playing! Here is your reward for Day {{ gameService.gameState().consecutiveLoginDays }}:</p>
+              <div class="bg-gray-900/50 rounded-lg p-4 space-y-2">
+                  <p class="text-xl"><span class="font-semibold text-yellow-300">Gold:</span> 💰 {{ formatNumber(dailyReward().gold) }}</p>
+                  @if (dailyReward().prestigePoints > 0) {
+                    <p class="text-xl"><span class="font-semibold text-cyan-300">Prestige Points:</span> 💎 {{ formatNumber(dailyReward().prestigePoints) }}</p>
+                  }
+              </div>
+              <button (click)="claimDailyReward()" class="mt-6 w-full py-2 bg-yellow-600 text-white font-bold rounded-md hover:bg-yellow-700 transition-colors transform active:scale-95">Claim Reward</button>
+          </div>
+      </div>
+  }
+</div>
