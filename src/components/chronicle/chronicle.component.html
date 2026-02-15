@@ -1,0 +1,111 @@
+<div class="h-full w-full bg-gray-900 flex flex-col animate-fadeIn overflow-hidden relative p-4">
+  <!-- BG -->
+  <div class="absolute inset-0 bg-gradient-to-br from-indigo-900/40 via-black to-slate-900/60 z-0"></div>
+  <div class="absolute inset-0 z-0 pointer-events-none animate-bg-float" style="animation-duration: 120s;">
+    <div class="star-particle" style="top: 10%; left: 15%; animation-delay: 0s;"></div>
+    <div class="star-particle" style="top: 85%; left: 90%; animation-delay: 1.5s;"></div>
+    <div class="star-particle" style="top: 50%; left: 50%; animation-delay: 3s; width: 3px; height: 3px;"></div>
+  </div>
+
+  <header class="text-center mb-4 z-10 flex justify-between items-center">
+    <button (click)="viewChange.emit('heroCommand')" class="bg-gray-700/50 hover:bg-gray-600/50 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+        Hero Command
+    </button>
+    <div class="flex-grow">
+      <h1 class="text-3xl font-orbitron text-indigo-300">Astral Chronicle</h1>
+      <p class="text-gray-400">Weave the memories that define your heroes.</p>
+    </div>
+    <div class="w-48"></div>
+  </header>
+
+  <div class="relative z-10 flex-grow flex flex-col md:flex-row overflow-hidden gap-4">
+    <!-- Hero Roster -->
+    <div class="w-full md:w-1/3 flex flex-col bg-black/30 p-2 rounded-lg border border-gray-700/50">
+      <h2 class="text-lg font-orbitron text-gray-300 text-center mb-2 flex-shrink-0">Select a Hero</h2>
+      <div class="flex-grow overflow-y-auto pr-2 space-y-1">
+        @for(hero of eligibleHeroes(); track hero.id) {
+          <button (click)="selectHero(hero.id)" class="p-2 w-full rounded-lg flex items-center gap-3 text-left transition-colors duration-200" [class.bg-indigo-900/50]="selectedHeroId() === hero.id" [class.hover:bg-gray-700/60]="selectedHeroId() !== hero.id">
+            <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center border-2 text-sm font-bold" [class]="getRarityBorderClass(hero.rarity)">{{ getHeroInitials(hero.name) }}</div>
+            <div>
+              <p class="font-bold text-white leading-tight">{{ hero.name }}</p>
+              <p class="text-xs text-gray-400">Level {{ hero.level }}</p>
+            </div>
+          </button>
+        }
+      </div>
+    </div>
+    
+    <!-- Chronicle Interface -->
+    <div class="w-full md:w-2/3 flex-grow flex flex-col bg-black/30 p-4 rounded-lg border border-gray-700/50 overflow-y-auto">
+      @if(selectedHero(); as hero) {
+        <div class="animate-content-fade-in">
+          <!-- Weave Memory Section -->
+          <div class="bg-gray-900/50 p-4 rounded-lg mb-4">
+            <h3 class="text-xl font-orbitron text-indigo-300 mb-2">Weave a New Memory</h3>
+            <p class="text-sm text-gray-400 mb-2">Provide a theme or a keyword to inspire a new memory for {{ hero.name }}.</p>
+            <textarea [(ngModel)]="memoryPrompt" placeholder="e.g., 'A forgotten rival' or 'The day they discovered their power...'" rows="2" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+            <div class="flex flex-wrap gap-1 mt-2">
+              @for(prompt of defaultPrompts; track prompt) {
+                <button (click)="useDefaultPrompt(prompt)" class="px-2 py-1 bg-gray-700 text-xs rounded-full hover:bg-gray-600">{{ prompt }}</button>
+              }
+            </div>
+            <div class="flex justify-between items-center mt-3">
+              <p class="text-lg font-semibold" [class.text-green-400]="canWeaveMemory()" [class.text-red-400]="!canWeaveMemory()">Cost: 💎 {{ gameService.WEAVE_MEMORY_COST }}</p>
+              <button (click)="weaveMemory()" [disabled]="!canWeaveMemory() || isWeavingMemory() || !memoryPrompt().trim()" class="px-5 py-2 bg-indigo-600 text-white font-bold rounded-md hover:bg-indigo-700 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
+                @if(isWeavingMemory()) { <span>Weaving...</span> } @else { <span>Weave Memory</span> }
+              </button>
+            </div>
+            @if(lastMemoryError()) { <p class="text-red-400 text-sm mt-2 text-center">{{ lastMemoryError() }}</p> }
+          </div>
+
+          <!-- Memories List -->
+          <h3 class="text-xl font-orbitron text-gray-300 mt-6 mb-2">Recalled Memories</h3>
+          <div class="space-y-4">
+            @for(memory of heroMemories(); track memory.id) {
+              <div class="bg-gray-800/50 p-4 rounded-lg border-l-4 border-indigo-400">
+                <p class="text-sm italic text-gray-400">Prompt: "{{ memory.prompt }}"</p>
+                <p class="text-gray-200 mt-2">{{ memory.text }}</p>
+
+                @if(memory.quest) {
+                  @let quest = memory.quest;
+                  <div class="mt-4 pt-3 border-t border-gray-700/50">
+                    <h4 class="font-bold text-yellow-400">Forged Destiny: {{ quest.title }}</h4>
+                    <p class="text-sm text-gray-300 italic">"{{ quest.narrative }}"</p>
+                    <div class="text-center mt-2 p-2 bg-black/30 rounded-md">
+                      @if(quest.isClaimed) {
+                        <p class="font-semibold text-green-400">Destiny Fulfilled!</p>
+                      } @else if(quest.isCompleted) {
+                        <p class="font-semibold text-green-400">Quest Complete! Claim your reward in the Quests tab.</p>
+                      } @else {
+                        <p class="text-gray-400">Quest in progress. View in the Quests tab.</p>
+                      }
+                    </div>
+                  </div>
+                } @else {
+                  <div class="mt-4 pt-3 border-t border-gray-700/50 flex justify-between items-center">
+                    <p class="text-lg font-semibold" [class.text-green-400]="gameService().gameState().gold >= gameService.FORGE_DESTINY_COST" [class.text-red-400]="gameService().gameState().gold < gameService.FORGE_DESTINY_COST">Cost: 💰 {{ formatNumber(gameService.FORGE_DESTINY_COST) }}</p>
+                    <button (click)="forgeDestiny(memory.id)" [disabled]="gameService().gameState().gold < gameService.FORGE_DESTINY_COST || isForgingQuest()" class="px-4 py-2 text-sm bg-yellow-600 text-black font-bold rounded-md hover:bg-yellow-500 transition-colors disabled:bg-gray-600 disabled:text-white">
+                      @if(isForgingQuest()) { <span>Forging...</span> } @else { <span>Forge a Destiny</span> }
+                    </button>
+                  </div>
+                }
+              </div>
+            } @empty {
+              <div class="text-center py-8 text-gray-500 italic">
+                <p>{{ hero.name }} has no memories recorded in the Chronicle.</p>
+                <p class="mt-1">Weave a new memory to begin their story.</p>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="text-center text-gray-500 m-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+          <h2 class="mt-4 text-2xl font-orbitron">The Chronicle is Open</h2>
+          <p>Select a hero from the roster to view or create their memories.</p>
+        </div>
+      }
+    </div>
+  </div>
+</div>

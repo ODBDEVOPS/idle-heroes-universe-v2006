@@ -1,0 +1,334 @@
+<div class="h-full w-full bg-gray-800 flex flex-col animate-fadeIn overflow-hidden">
+  <header class="p-4 border-b-2 border-gray-700/50 flex-shrink-0">
+     <button (click)="back()" class="flex items-center gap-2 text-purple-300 font-semibold hover:text-purple-200 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+      <span>Back to Roster</span>
+    </button>
+  </header>
+
+  <div class="flex-grow overflow-y-auto relative">
+     @if(heroData(); as hero) {
+        <div class="p-2 md:p-4 space-y-2 md:space-y-4 max-w-5xl mx-auto flex flex-col h-full">
+          <!-- Hero Header -->
+          <div class="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-lg relative" [class]="getRarityHeaderBgClass(hero.rarity)">
+              @if (levelUpNotice()?.heroId === hero.id) { <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 py-2 bg-green-500 text-white text-lg font-bold rounded-lg shadow-lg animate-level-up-fade-out z-20 pointer-events-none">Level Up! +{{ levelUpNotice()?.levelsGained }}</div> }
+              <div class="w-28 h-28 rounded-lg flex-shrink-0 flex items-center justify-center border-4 relative overflow-hidden bg-gray-800/50" [class]="getRarityBorderClass(hero.rarity)">
+                <svg viewBox="0 0 24 24" class="absolute inset-0 w-full h-full text-black/20 z-0 transform scale-125"><path [attr.d]="roleIcons[hero.role] || ''" fill="currentColor"></path></svg>
+                <span class="font-orbitron text-5xl text-gray-200 drop-shadow-lg relative z-10">{{ getHeroInitials(hero.name) }}</span>
+              </div>
+              <div class="flex-grow text-center sm:text-left">
+                  <div class="flex items-center justify-center sm:justify-start gap-3">
+                      <h3 class="font-orbitron text-3xl font-bold text-white">{{ hero.name }}</h3>
+                  </div>
+                  <p class="text-lg font-semibold text-gray-300">Level {{hero.level}}</p>
+                    <div class="mt-2 flex items-center justify-center sm:justify-start gap-2">
+                        @if(activeHeroIdSet().has(hero.id)) {
+                            <button (click)="removeHeroFromTeam()" class="px-3 py-1 bg-red-600 text-white text-sm font-bold rounded-md hover:bg-red-700 transition-all">Remove from Team</button>
+                        } @else {
+                            <button (click)="enterPlacementMode()" [disabled]="hero.level === 0" class="px-3 py-1 bg-green-600 text-white text-sm font-bold rounded-md hover:bg-green-700 transition-all disabled:bg-gray-600 disabled:cursor-not-allowed">Place on Slot...</button>
+                        }
+                    </div>
+              </div>
+              <button (click)="toggleFavorite(hero.id, $event)" class="absolute top-2 right-2 text-gray-600 hover:text-yellow-300 transition-colors duration-200 transform hover:scale-125 active:scale-100 bg-gray-900/50 rounded-full p-1 border border-gray-600 z-10">
+                  @if (hero.isFavorite) { <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg> } 
+                  @else { <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg> }
+              </button>
+          </div>
+
+          <!-- Tabs -->
+          <div class="flex border-b-2 border-gray-700/50 flex-shrink-0">
+              <button (click)="internalView.set('stats')" class="px-4 py-2 font-orbitron transition-colors" [class.text-purple-300]="internalView() === 'stats'" [class.border-b-2]="internalView() === 'stats'" [class.border-purple-300]="internalView() === 'stats'" [class.text-gray-400]="internalView() !== 'stats'">Stats & Gear</button>
+              @if(path()) {
+                <button (click)="internalView.set('specialization')" class="px-4 py-2 font-orbitron transition-colors" [class.text-purple-300]="internalView() === 'specialization'" [class.border-b-2]="internalView() === 'specialization'" [class.border-purple-300]="internalView() === 'specialization'" [class.text-gray-400]="internalView() !== 'specialization'">Specialization</button>
+              }
+              <button (click)="internalView.set('lore')" class="px-4 py-2 font-orbitron transition-colors" [class.text-purple-300]="internalView() === 'lore'" [class.border-b-2]="internalView() === 'lore'" [class.border-purple-300]="internalView() === 'lore'" [class.text-gray-400]="internalView() !== 'lore'">Info</button>
+          </div>
+
+          <!-- Placement Mode UI -->
+          @if(isPlacementMode()) {
+              <div class="bg-black/30 p-2 rounded-xl border border-purple-500/30">
+                  <h2 class="text-lg font-orbitron text-yellow-300 animate-pulse mb-2 text-center">Select an empty slot for {{ hero.name }}</h2>
+                  <div class="overflow-x-auto no-scrollbar scroll-mask -mx-2 px-2 py-1">
+                      <div class="flex flex-nowrap gap-1.5">
+                          @for(teamHero of activeTeamHeroes(); track $index) {
+                              <div class="w-16 h-16 shrink-0 rounded-md flex items-center justify-center border-2 transition-all duration-200" [class]="teamHero ? getRarityBorderClass(teamHero.rarity) : 'border-gray-700 border-dashed'" [class.cursor-pointer]="!teamHero" [class.hover:bg-purple-500/50]="!teamHero" (click)="!teamHero ? placeHeroInSlot($index) : null" [appTooltip]="teamHero?.name || 'Empty Slot'">
+                                  @if(teamHero) { <span class="font-orbitron text-sm text-gray-200">{{ getHeroInitials(teamHero.name) }}</span> } 
+                                  @else { <span class="text-lg text-gray-600">+</span> }
+                              </div>
+                          }
+                      </div>
+                  </div>
+                  <div class="text-center mt-2"><button (click)="cancelPlacementMode()" class="text-xs px-3 py-1 bg-red-600 rounded-md">Cancel</button></div>
+              </div>
+          }
+
+          <!-- Tab Content -->
+          <div class="flex-grow overflow-y-auto pr-2">
+            @switch (internalView()) {
+              @case ('stats') {
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 animate-fadeIn">
+                    <!-- Left Column: Progression & Actions -->
+                    <div class="bg-gray-800/50 rounded-lg p-4 flex flex-col gap-4">
+                        <h4 class="text-xl font-orbitron text-center text-gray-300 border-b border-gray-700 pb-2">Progression & Actions</h4>
+                        
+                        <!-- XP Bar -->
+                        <div>
+                          <div class="w-full bg-gray-700 rounded-full h-3.5 relative overflow-hidden mb-2"><div class="bg-blue-500 h-full rounded-full" [style.width.%]="(hero.currentXp / hero.xpToNextLevel) * 100"></div></div>
+                          <p class="text-sm text-center text-gray-400 font-semibold">{{ formatNumber(hero.currentXp) }} / {{ formatNumber(hero.xpToNextLevel) }} XP</p>
+                          @if(hero.offlineXp > 0) {
+                            <div class="mt-2 bg-blue-900/50 p-2 rounded-md flex items-center justify-between">
+                              <p class="text-blue-300 font-semibold">Offline XP: +{{ formatNumber(hero.offlineXp) }}</p>
+                              <button (click)="claimXp(hero.id, $event)" class="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-md hover:bg-blue-500 transition-all transform hover:scale-105 active:scale-95 animate-pulse-glow-blue">Claim XP</button>
+                            </div>
+                          }
+                        </div>
+                        
+                        <!-- Level Up -->
+                        <div class="space-y-2">
+                          <button (click)="levelUp(hero.id)" [disabled]="gameService().gameState().gold < hero.nextLevelCost" [appTooltip]="(gameService().gameState().gold < hero.nextLevelCost) ? 'Not enough gold' : 'Level up for ' + formatNumber(hero.nextLevelCost) + ' gold'" class="w-full px-4 py-3 bg-purple-600 text-white font-bold rounded-md hover:bg-purple-700 transition-all duration-200 disabled:bg-gray-600 disabled:cursor-not-allowed transform hover:scale-105 active:scale-100 disabled:hover:scale-100">
+                              <span>Level Up (+1) for 💰 {{ formatNumber(hero.nextLevelCost) }}</span>
+                          </button>
+                          <div class="flex justify-between gap-2">
+                              @let gold = gameService().gameState().gold; @let cost10 = calculateCost(hero, 10); @let cost25 = calculateCost(hero, 25); @let max = calculateMaxLevels(hero, gold);
+                              <button (click)="levelUpMultiple(hero.id, 10)" [disabled]="gold < cost10" [appTooltip]="'Level up x10 for ' + formatNumber(cost10) + ' gold'" class="w-1/3 py-2 text-sm font-bold bg-purple-800 rounded-md hover:bg-purple-700 disabled:bg-gray-600 transition-colors">+10</button>
+                              <button (click)="levelUpMultiple(hero.id, 25)" [disabled]="gold < cost25" [appTooltip]="'Level up x25 for ' + formatNumber(cost25) + ' gold'" class="w-1/3 py-2 text-sm font-bold bg-purple-800 rounded-md hover:bg-purple-700 disabled:bg-gray-600 transition-colors">+25</button>
+                              <button (click)="levelUpMax(hero.id)" [disabled]="max.levels === 0" [appTooltip]="'Level up x' + max.levels + ' for ' + formatNumber(max.cost) + ' gold'" class="w-1/3 py-2 text-sm font-bold bg-yellow-600 hover:bg-yellow-500 text-black rounded-md disabled:bg-gray-600 disabled:text-white transition-colors">MAX</button>
+                          </div>
+                        </div>
+
+                        <!-- Ascension & Specialization -->
+                        <div class="space-y-2 pt-4 border-t border-gray-700">
+                           <button (click)="goToFusion(hero.id)" class="w-full px-4 py-2 bg-yellow-600 text-black font-bold rounded-md hover:bg-yellow-500 transition-all" [class.animate-pulse-glow]="hero.canAscend">
+                                <span>Ascend (Fusion)</span>
+                                <span class="block text-xs" [class.text-green-800]="hero.shardCount >= hero.requiredShards" [class.text-red-800]="hero.shardCount < hero.requiredShards">💧 {{ hero.shardCount }} / {{ hero.requiredShards }}</span>
+                           </button>
+                           @if (path()) {
+                            <button (click)="goToSpecialization(hero.id)" class="w-full px-4 py-2 bg-indigo-600 text-white font-bold rounded-md hover:bg-indigo-500 transition-all">
+                                <span>Specialization</span>
+                            </button>
+                           }
+                        </div>
+                    </div>
+                    <!-- Right Column: Stats & Equipment -->
+                    <div class="bg-gray-800/50 rounded-lg p-4 flex flex-col gap-4">
+                        <!-- Stats -->
+                        <div>
+                          <h4 class="text-xl font-orbitron text-center text-gray-300 mb-3 border-b border-gray-700 pb-2">Hero Statistics</h4>
+                          <div class="space-y-2 text-sm">
+                            <div class="flex justify-between items-center"><span class="text-gray-400">Rarity:</span><span class="font-semibold px-2 py-0.5 rounded-full" [class]="getRarityPillClass(hero.rarity)">{{ hero.rarity }}</span></div>
+                            <div class="flex justify-between items-center"><span class="text-gray-400">Role:</span><span class="font-semibold text-white">{{ hero.role }}</span></div>
+                            <div class="flex justify-between items-center"><span class="text-gray-400">Ascension:</span><span class="font-semibold text-purple-300">⭐ {{ hero.ascensionLevel }}</span></div>
+                            <div class="flex justify-between items-center"><span class="text-gray-400">Current DPS:</span><span class="font-orbitron font-semibold text-purple-300">⚔️ {{ formatNumber(hero.currentDps) }}</span></div>
+                          </div>
+                        </div>
+                        
+                        <!-- Equipment -->
+                        <div>
+                            <div class="flex justify-between items-center mb-3 border-b border-gray-700 pb-2">
+                              <h4 class="text-xl font-orbitron text-gray-300">Equipment</h4>
+                              <button (click)="autoEquip(hero.id)" class="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-md hover:bg-blue-700 transition-all">Auto-Equip</button>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2">
+                                @for(slot of ['Weapon', 'Armor', 'Accessory']; track slot) {
+                                  @let item = hero.equipment[slot];
+                                  <div (click)="openEquipModal(slot)" class="aspect-square rounded-lg p-2 flex flex-col items-center justify-center text-center cursor-pointer border-2 transition-all" [class]="item ? getRarityBgClass(item.rarity) + ' ' + getRarityBorderClass(item.rarity) + ' shadow-lg ' + getRarityShadowClass(item.rarity) : 'bg-gray-900/50 border-dashed border-gray-700 hover:border-purple-400'">
+                                    <svg class="h-8 w-8 mb-1 flex-shrink-0" [class]="item ? getRarityTextColor(item.rarity) : 'text-gray-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" [attr.d]="getSlotIcon(slot)"></path></svg>
+                                    <div class="flex-grow flex flex-col justify-center overflow-hidden">
+                                      @if(item) {
+                                        <p class="text-xs font-bold leading-tight truncate" [class]="getRarityTextColor(item.rarity)">
+                                          {{ item.name }}
+                                          @if(item.enchantLevel > 0) { <span class="text-yellow-400">+{{ item.enchantLevel }}</span> }
+                                        </p>
+                                        <p class="text-[10px] text-green-400 font-semibold mt-1">{{ formatBonus(item) }}</p>
+                                      } @else { <p class="text-sm text-gray-500 font-semibold">Empty</p> <p class="text-xs text-gray-600">{{ slot }}</p> }
+                                    </div>
+                                  </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+              }
+              @case ('specialization') {
+                <div class="w-full mx-auto flex flex-col items-center gap-8 animate-fadeIn p-4">
+                    @if(path(); as p) {
+                        <!-- Base Class -->
+                        <div class="flex flex-col items-center">
+                            <div class="w-24 h-24 rounded-lg flex-shrink-0 flex items-center justify-center border-4 bg-gray-800" [class]="getRarityBorderClass(hero.rarity)">
+                                <span class="font-orbitron text-4xl text-gray-200 drop-shadow-lg">{{ getHeroInitials(hero.name) }}</span>
+                            </div>
+                            <h3 class="font-orbitron text-xl font-bold text-white mt-2">{{ p.baseClass }}</h3>
+                            <p class="text-sm text-gray-400">Base Class</p>
+                        </div>
+                        
+                        <!-- Promotion 1 -->
+                        <div class="flex flex-col items-center gap-4">
+                           <div class="w-px h-8 bg-gray-600"></div>
+                           <p class="text-xs text-gray-500 font-bold uppercase tracking-widest">Promotion 1 (Lvl {{ p.promotion1.levelReq }})</p>
+                           <div class="flex justify-center gap-12">
+                              @for(node of promotion1Nodes(); track node.spec.id) {
+                                  <div class="relative flex flex-col items-center group w-48">
+                                    <div class="w-20 h-20 rounded-full flex items-center justify-center text-3xl border-4 transition-all"
+                                         [class.bg-purple-600]="node.status === 'unlocked'" [class.border-purple-300]="node.status === 'unlocked'"
+                                         [class.bg-green-700]="node.status === 'available'" [class.border-green-400]="node.status === 'available'" [class.animate-pulse-glow]="node.status === 'available'"
+                                         [class.bg-gray-800]="node.status === 'locked'" [class.border-gray-600]="node.status === 'locked'">
+                                         {{ node.spec.icon }}
+                                    </div>
+                                    <h4 class="mt-2 font-orbitron font-semibold text-lg text-center" [class.text-white]="node.status !== 'locked'" [class.text-gray-500]="node.status === 'locked'">{{ node.spec.name }}</h4>
+                                    
+                                    @if (node.status === 'unlocked') {
+                                      <div class="mt-2 text-xs text-left bg-black/30 p-2 rounded-md border border-purple-400 w-full">
+                                        <p class="font-bold text-gray-300 text-center mb-1 border-b border-gray-700 pb-1">Active Bonuses</p>
+                                        <div class="space-y-1">
+                                          @if (node.spec.statBonuses.dpsPercent) { <p class="text-green-400">+{{ node.spec.statBonuses.dpsPercent * 100 }}% Total DPS</p> }
+                                          @if (node.spec.statBonuses.skillDamagePercent) { <p class="text-green-400">+{{ node.spec.statBonuses.skillDamagePercent * 100 }}% Skill Damage</p> }
+                                          @if (node.spec.roleOverride) { <p class="text-cyan-400">Role changes to {{ node.spec.roleOverride }}</p> }
+                                          @if (node.spec.skillModification) {
+                                            <div class="mt-2 pt-1 border-t border-gray-700">
+                                              <p class="text-yellow-400 font-semibold">Skill Updated:</p>
+                                              <p class="text-gray-300 italic">"{{ node.spec.skillModification.newDescription }}"</p>
+                                            </div>
+                                          }
+                                        </div>
+                                      </div>
+                                    } @else if(node.status === 'available') {
+                                      <button (click)="promote(node.spec.id)" [disabled]="isPromoting()" class="mt-2 px-4 py-1 bg-green-600 text-white font-bold rounded-md hover:bg-green-500">Promote (🌟{{p.promotion1.cost}})</button>
+                                    } @else if(node.status === 'locked') {
+                                      <div class="mt-2 text-xs text-red-400 font-semibold flex justify-center gap-2">@for(req of node.requirements; track req) {<span>{{req}}</span>}</div>
+                                    }
+
+                                    <!-- Tooltip -->
+                                    <div class="absolute bottom-full mb-2 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-gray-700">
+                                        <p class="font-bold text-purple-300">{{node.spec.name}}</p>
+                                        <p>{{node.spec.description}}</p>
+                                    </div>
+                                  </div>
+                              }
+                           </div>
+                        </div>
+
+                        <!-- Promotion 2 -->
+                        @if (promotion2Nodes().length > 0) {
+                          <div class="flex flex-col items-center gap-4">
+                            <div class="w-px h-8 bg-gray-600"></div>
+                            <p class="text-xs text-gray-500 font-bold uppercase tracking-widest">Promotion 2 (Lvl {{ p.promotion2.levelReq }})</p>
+                            <div class="flex justify-center gap-12">
+                              @for(node of promotion2Nodes(); track node.spec.id) {
+                                    <div class="relative flex flex-col items-center group">
+                                      <div class="w-20 h-20 rounded-full flex items-center justify-center text-3xl border-4 transition-all"
+                                          [class.bg-purple-600]="node.status === 'unlocked'" [class.border-purple-300]="node.status === 'unlocked'"
+                                          [class.bg-green-700]="node.status === 'available'" [class.border-green-400]="node.status === 'available'" [class.animate-pulse-glow]="node.status === 'available'"
+                                          [class.bg-gray-800]="node.status === 'locked'" [class.border-gray-600]="node.status === 'locked'">
+                                          {{ node.spec.icon }}
+                                      </div>
+                                      <h4 class="mt-2 font-orbitron font-semibold text-lg" [class.text-white]="node.status !== 'locked'" [class.text-gray-500]="node.status === 'locked'">{{ node.spec.name }}</h4>
+
+                                      @if(node.status === 'available') {
+                                        <button (click)="promote(node.spec.id)" [disabled]="isPromoting()" class="mt-2 px-4 py-1 bg-green-600 text-white font-bold rounded-md hover:bg-green-500">Promote (🌟{{p.promotion2.cost}})</button>
+                                      } @else if(node.status === 'locked') {
+                                        <div class="mt-2 text-xs text-red-400 font-semibold flex gap-2">@for(req of node.requirements; track req) {<span>{{req}}</span>}</div>
+                                      }
+                                      
+                                      <div class="absolute bottom-full mb-2 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-gray-700">
+                                          <p class="font-bold text-purple-300">{{node.spec.name}}</p>
+                                          <p>{{node.spec.description}}</p>
+                                      </div>
+                                    </div>
+                                }
+                            </div>
+                          </div>
+                        }
+                    } @else {
+                      <div class="text-center text-gray-500">
+                        <p>{{h.name}} does not have a specialization path yet.</p>
+                      </div>
+                    }
+                  </div>
+              }
+              @case ('lore') {
+                <div class="space-y-4 animate-fadeIn">
+                  <div class="bg-gray-800/50 rounded-lg p-4">
+                    <h4 class="text-xl font-orbitron text-gray-300 mb-2 border-b border-gray-700 pb-1">Active Skill</h4>
+                    <p class="text-sm text-gray-300 mt-2">{{hero.skillDescription}}</p>
+                  </div>
+                  <div class="bg-gray-800/50 rounded-lg p-4">
+                    <h4 class="text-xl font-orbitron text-gray-300 mb-2 border-b border-gray-700 pb-1">Lore</h4>
+                    <p class="text-sm text-gray-400 italic mt-2">{{hero.lore}}</p>
+                  </div>
+                   <div class="bg-gray-800/50 rounded-lg p-4">
+                      <h4 class="text-xl font-orbitron text-center text-gray-300 mb-3 border-b border-gray-700 pb-2">Lifetime Stats</h4>
+                      <div class="space-y-2 text-sm">
+                          <div class="flex justify-between items-center">
+                              <span class="text-gray-400">Total Damage Dealt:</span>
+                              <span class="font-orbitron font-semibold text-purple-300">⚔️ {{ formatNumber(hero.stats?.totalDamageDealt ?? 0) }}</span>
+                          </div>
+                          <div class="flex justify-between items-center">
+                              <span class="text-gray-400">Skills Used:</span>
+                              <span class="font-orbitron font-semibold text-cyan-300">{{ formatNumber(hero.stats?.skillsUsed ?? 0) }}</span>
+                          </div>
+                      </div>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+      </div>
+    } @else {
+        <div class="w-full h-full flex flex-col items-center justify-center text-center p-8">
+            <h2 class="mt-4 text-2xl font-orbitron text-red-500">Hero Not Found</h2>
+            <p class="text-gray-600 mt-2">The selected hero could not be loaded.</p>
+        </div>
+    }
+  </div>
+
+  <!-- Modals -->
+  @if(isEquipModalOpen()) {
+    @let hero = heroData();
+    @let slot = selectedSlot();
+    <div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50" (click)="closeEquipModal()">
+      <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 border-2 border-purple-500 animate-modal-fade-in" (click)="$event.stopPropagation()">
+        <header class="flex justify-between items-center mb-4">
+          <div>
+              <h2 class="text-2xl font-orbitron">Equip <span class="text-purple-400">{{ slot }}</span></h2>
+              <p class="text-gray-400">for {{ hero?.name }}</p>
+          </div>
+          <button (click)="closeEquipModal()" class="text-gray-400 hover:text-white text-3xl leading-none transform transition-transform hover:scale-125">&times;</button>
+        </header>
+        
+        <div class="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+          @if(hero?.equipment[slot!]; as equippedItem) {
+              <div class="bg-gray-700 rounded-md p-3 flex justify-between items-center border-l-4" [class]="getRarityBorderClass(equippedItem.rarity)">
+                  <div>
+                      <p class="font-bold text-gray-300">Currently Equipped:</p>
+                      <p class="font-semibold" [class]="getRarityTextColor(equippedItem.rarity)">
+                        {{ equippedItem.name }}
+                        @if(equippedItem.enchantLevel > 0) {
+                            <span class="text-yellow-400">+{{ equippedItem.enchantLevel }}</span>
+                        }
+                      </p>
+                  </div>
+                  <button (click)="onUnequipItem()" class="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 transition-all duration-200 transform hover:scale-105 active:scale-95">Unequip</button>
+              </div>
+          }
+          <h3 class="text-lg font-semibold border-b border-gray-600 pb-1 pt-2">Available in Inventory</h3>
+          @for(item of availableItemsForSlot(); track item.id) {
+            <div class="bg-gray-900 rounded-md p-3 flex justify-between items-center transition-transform hover:scale-[1.02] border-l-4" [class]="getRarityBorderClass(item.rarity)">
+              <div>
+                <p class="font-bold" [class]="getRarityTextColor(item.rarity)">
+                    {{ item.name }}
+                    @if(item.enchantLevel > 0) {
+                        <span class="text-yellow-400">+{{ item.enchantLevel }}</span>
+                    }
+                </p>
+                <p class="text-sm text-green-400">{{ formatBonus(item) }}</p>
+              </div>
+              <button (click)="onEquipItem(item.id)" class="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-all duration-200 transform hover:scale-105 active:scale-95">Equip</button>
+            </div>
+          } @empty {
+            <div class="text-center py-4 text-gray-500">No available items for this slot.</div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

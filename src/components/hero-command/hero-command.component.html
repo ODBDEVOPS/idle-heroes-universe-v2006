@@ -1,0 +1,103 @@
+<div class="h-full w-full relative overflow-y-auto flex flex-col items-center p-4 bg-gray-900 animate-fadeIn">
+  <!-- Background Elements -->
+  <div class="absolute inset-0 bg-gradient-to-b from-purple-900/50 via-gray-900 to-gray-900 z-0"></div>
+  <div class="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-cyan-600/20 rounded-full blur-3xl"></div>
+  <div class="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-rose-600/20 rounded-full blur-3xl"></div>
+
+  <header class="relative z-10 text-center mb-6 md:mb-8">
+    <h1 class="text-4xl font-orbitron text-white drop-shadow-lg">Hero Command</h1>
+    <p class="text-gray-300">Manage all aspects of your heroes' growth and potential.</p>
+  </header>
+
+  <main class="relative z-10 w-full max-w-2xl">
+    <div class="flex flex-col gap-6">
+
+      <!-- Section: Core Progression -->
+      <div>
+        <h2 class="text-xl font-orbitron text-purple-300 mb-3 pl-2 border-l-4 border-purple-400 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547a2 2 0 00-.547 1.806l.477 2.387a6 6 0 00.517 3.86l.158.318a6 6 0 00.517 3.86l2.387.477a2 2 0 001.806-.547a2 2 0 00.547-1.806l-.477-2.387a6 6 0 00-.517-3.86l-.158-.318a6 6 0 01-.517-3.86l-2.387-.477a2 2 0 01-.547-1.806z" /></svg>
+          <span>Core Progression</span>
+        </h2>
+        <div class="flex flex-col gap-3">
+          <!-- Full Roster -->
+          <button (click)="navigateTo('team')" class="group w-full bg-black/40 rounded-lg border-2 border-blue-500/50 hover:border-blue-500 hover:bg-blue-900/30 p-4 flex items-center gap-4 text-left transition-all duration-200 transform hover:scale-105 active:scale-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-blue-400 group-hover:text-blue-300 transition-colors flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>
+            <div>
+              <h3 class="font-orbitron text-lg font-bold text-white">Full Roster</h3>
+              <p class="text-sm text-gray-400 group-hover:text-gray-200">View, level up, and manage all your heroes.</p>
+            </div>
+          </button>
+          
+          <!-- Hero Fusion -->
+          <button (click)="navigateTo('fusion')" class="group w-full bg-black/40 rounded-lg border-2 border-purple-500/50 hover:border-purple-500 hover:bg-purple-900/30 p-4 flex items-center gap-4 text-left transition-all duration-200 transform hover:scale-105 active:scale-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-purple-400 group-hover:text-purple-300 transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+            <div>
+              <h3 class="font-orbitron text-lg font-bold text-white">Hero Fusion</h3>
+              <p class="text-sm text-gray-400 group-hover:text-gray-200">Ascend heroes to greatly increase their power.</p>
+            </div>
+          </button>
+
+          <!-- Skill Training -->
+          <button (click)="navigateTo('skillTraining')" class="group w-full bg-black/40 rounded-lg border-2 border-orange-500/50 hover:border-orange-500 hover:bg-orange-900/30 p-4 flex items-center gap-4 text-left transition-all duration-200 transform hover:scale-105 active:scale-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-orange-400 group-hover:text-orange-300 transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+            <div>
+              <h3 class="font-orbitron text-lg font-bold text-white">Skill Training</h3>
+              <p class="text-sm text-gray-400 group-hover:text-gray-200">Upgrade hero skills for greater effect.</p>
+            </div>
+          </button>
+
+          <!-- Hero Specialization -->
+          <button (click)="navigateTo('heroSpecialization')" class="group w-full bg-black/40 rounded-lg border-2 border-yellow-500/50 hover:border-yellow-500 hover:bg-yellow-900/30 p-4 flex items-center gap-4 text-left transition-all duration-200 transform hover:scale-105 active:scale-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-yellow-400 group-hover:text-yellow-300 transition-colors flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 2-1-2-.257-.257A6 6 0 1118 8zM10 2a4 4 0 100 8 4 4 0 000-8z" /></svg>
+            <div>
+              <h3 class="font-orbitron text-lg font-bold text-white">Hero Specialization</h3>
+              <p class="text-sm text-gray-400 group-hover:text-gray-200">Unlock advanced classes and abilities.</p>
+            </div>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Section: Growth & Strategy -->
+      <div>
+        <h2 class="text-xl font-orbitron text-green-300 mb-3 pl-2 border-l-4 border-green-400">Growth & Strategy</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Hero Nexus -->
+          <button (click)="navigateTo('heroFarm')" class="group w-full bg-black/40 rounded-lg border-2 border-cyan-500/50 hover:border-cyan-500 hover:bg-cyan-900/30 p-4 flex items-center gap-4 text-left transition-all duration-200 transform hover:scale-105 active:scale-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-cyan-400 group-hover:text-cyan-300 transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 2a10 10 0 100 20 10 10 0 000-20z" /></svg>
+            <div>
+              <h3 class="font-orbitron text-lg font-bold text-white">Hero Nexus</h3>
+              <p class="text-sm text-gray-400 group-hover:text-gray-200">Generate hero resources.</p>
+            </div>
+          </button>
+
+          <!-- Pet Sanctuary -->
+          <button (click)="navigateTo('pets')" class="group w-full bg-black/40 rounded-lg border-2 border-teal-500/50 hover:border-teal-500 hover:bg-teal-900/30 p-4 flex items-center gap-4 text-left transition-all duration-200 transform hover:scale-105 active:scale-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-teal-400 group-hover:text-teal-300 transition-colors flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3.5a.75.75 0 01.75.75v2.5a.75.75 0 01-1.5 0V4.25A.75.75 0 0110 3.5zM10 8.5a.75.75 0 01.75.75v2.5a.75.75 0 01-1.5 0V9.25A.75.75 0 0110 8.5zM8.5 5a.75.75 0 000 1.5h.5a.75.75 0 000-1.5h-.5zM6 6.5A.75.75 0 016.75 6h.5a.75.75 0 010 1.5h-.5A.75.75 0 016 6.5zM12 6.5a.75.75 0 01.75-.75h.5a.75.75 0 010 1.5h-.5A.75.75 0 0112 6.5zM10 14a1 1 0 100-2 1 1 0 000 2z" /><path fill-rule="evenodd" d="M.46 8.35A1.5 1.5 0 012.33 7.5h15.34a1.5 1.5 0 011.87 2.35l-1.95 3.38a1.5 1.5 0 01-1.3.77H4.59a1.5 1.5 0 01-1.3-.77L1.35 9.85a1.5 1.5 0 01-.89-1.5z" clip-rule="evenodd" /></svg>
+            <div>
+              <h3 class="font-orbitron text-lg font-bold text-white">Pet Sanctuary</h3>
+              <p class="text-sm text-gray-400 group-hover:text-gray-200">Manage companions.</p>
+            </div>
+          </button>
+          
+          <!-- Synergies -->
+          <button (click)="navigateTo('synergies')" class="group w-full bg-black/40 rounded-lg border-2 border-green-500/50 hover:border-green-500 hover:bg-green-900/30 p-4 flex items-center gap-4 text-left transition-all duration-200 transform hover:scale-105 active:scale-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-green-400 group-hover:text-green-300 transition-colors flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" /></svg>
+            <div>
+              <h3 class="font-orbitron text-lg font-bold text-white">Synergies</h3>
+              <p class="text-sm text-gray-400 group-hover:text-gray-200">Unlock team bonuses.</p>
+            </div>
+          </button>
+
+          <!-- Astral Chronicle -->
+          <button (click)="navigateTo('chronicle')" class="group w-full bg-black/40 rounded-lg border-2 border-indigo-400/50 hover:border-indigo-400 hover:bg-indigo-900/30 p-4 flex items-center gap-4 text-left transition-all duration-200 transform hover:scale-105 active:scale-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-indigo-300 group-hover:text-indigo-200 transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+            <div>
+              <h3 class="font-orbitron text-lg font-bold text-white">Astral Chronicle</h3>
+              <p class="text-sm text-gray-400 group-hover:text-gray-200">Weave memories.</p>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

@@ -1,0 +1,244 @@
+<div class="h-full w-full relative overflow-y-auto flex flex-col p-4 bg-gray-900 animate-fadeIn">
+  <!-- Background Elements -->
+  <div class="absolute inset-0 bg-gradient-to-br from-gray-900 via-red-900/40 to-indigo-900/30 z-0"></div>
+
+  <header class="relative z-10 text-center mb-4 flex justify-between items-center">
+    <button (click)="viewChange.emit('base')" class="bg-gray-700/50 hover:bg-gray-600/50 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+        Base Command
+    </button>
+    <div class="flex-grow">
+      <h1 class="text-3xl font-orbitron text-red-400">Dungeon Command</h1>
+      <p class="text-gray-300">Conquer the depths for glory and treasure.</p>
+    </div>
+    <div class="w-40 text-right font-semibold bg-gray-800/70 px-4 py-1 rounded-full border border-red-400/80">
+        <span class="text-red-300">🔑 {{ formatNumber(gameService().gameState().dungeonCrests) }} Crests</span>
+    </div>
+  </header>
+  
+  <div class="relative z-10 mb-4 flex space-x-1 sm:space-x-2 border-b-2 border-gray-700">
+    <button (click)="activeTab.set('runs')" class="px-4 py-2 text-base font-orbitron transition-all flex-grow" [class.text-red-400]="activeTab() === 'runs'" [class.border-b-2]="activeTab() === 'runs'" [class.border-red-400]="activeTab() === 'runs'" [class.text-gray-400]="activeTab() !== 'runs'">Dungeon Runs</button>
+    <button (click)="activeTab.set('bounties')" class="px-4 py-2 text-base font-orbitron transition-all flex-grow" [class.text-red-400]="activeTab() === 'bounties'" [class.border-b-2]="activeTab() === 'bounties'" [class.border-red-400]="activeTab() === 'bounties'" [class.text-gray-400]="activeTab() !== 'bounties'">Bounties</button>
+    <button (click)="activeTab.set('shop')" class="px-4 py-2 text-base font-orbitron transition-all flex-grow" [class.text-red-400]="activeTab() === 'shop'" [class.border-b-2]="activeTab() === 'shop'" [class.border-red-400]="activeTab() === 'shop'" [class.text-gray-400]="activeTab() !== 'shop'">Shop</button>
+  </div>
+  
+  <main class="relative z-10 flex-grow overflow-y-auto pr-2">
+    @switch (activeTab()) {
+      @case ('runs') {
+        <div class="animate-fadeIn">
+          <!-- Active Runs -->
+          <div class="mb-6">
+            <h3 class="text-xl font-orbitron text-gray-300 mb-2 flex justify-between items-center">
+              <span>Active Runs</span>
+              <span class="text-base font-semibold text-red-200 bg-gray-900/50 rounded-full px-3 py-0.5 border border-red-500/50">Slots: {{ dungeonSlots().current }} / {{ dungeonSlots().max }}</span>
+            </h3>
+            @if(activeDungeonRuns().length > 0) {
+              <div class="space-y-2">
+                @for(run of activeDungeonRuns(); track run.startTime) {
+                  <div class="bg-gray-900/50 p-3 rounded-lg">
+                    <p class="font-semibold text-white">{{ run.details.name }} ({{run.difficulty}})</p>
+                    @if (run.remainingSeconds > 0) {
+                      <div class="w-full bg-gray-700 rounded-full h-4 border border-red-700 overflow-hidden my-1"><div class="bg-red-500 h-full rounded-full transition-all duration-1000 ease-linear flex items-center justify-end px-2 text-xs font-bold text-white" [style.width.%]="run.progress">{{ run.progress.toFixed(0) }}%</div></div>
+                      <p class="text-sm font-orbitron text-red-300 text-center">{{ formatDuration(run.remainingSeconds) }}</p>
+                    } @else {
+                      <button (click)="claimDungeonRun(run)" class="w-full mt-2 py-2 bg-red-600 text-white font-bold rounded-md hover:bg-red-500 transition-colors animate-pulse-glow">Claim Reward</button>
+                    }
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-center text-gray-500 italic text-sm py-2">No dungeon runs in progress.</p>
+            }
+          </div>
+          <!-- Available Dungeons -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-xl font-orbitron text-gray-300">Available Dungeons</h3>
+              <div class="flex items-center gap-1 bg-gray-700 p-1 rounded-lg">
+                <button (click)="selectedDifficulty.set('Normal')" class="px-3 py-1 text-xs font-bold rounded" [class.bg-green-600]="selectedDifficulty() === 'Normal'">Normal</button>
+                <button (click)="selectedDifficulty.set('Hard')" class="px-3 py-1 text-xs font-bold rounded" [class.bg-orange-600]="selectedDifficulty() === 'Hard'">Hard</button>
+                <button (click)="selectedDifficulty.set('Nightmare')" class="px-3 py-1 text-xs font-bold rounded" [class.bg-red-700]="selectedDifficulty() === 'Nightmare'">Nightmare</button>
+              </div>
+            </div>
+            @if (dungeonSlots().current < dungeonSlots().max) {
+              <div class="space-y-2">
+                @for(dungeon of availableDungeons(); track dungeon.id) {
+                  <div class="bg-gray-900/50 p-3 rounded-lg flex justify-between items-center" [class.opacity-50]="!dungeon.isAvailable || dungeon.isActive">
+                    <div>
+                      <h4 class="font-semibold text-white">{{ dungeon.name }}</h4>
+                      <div class="flex items-center gap-4 text-sm mt-1">
+                        <span>🕒 {{ formatDuration(dungeon.difficultyDetails.durationSeconds) }}</span>
+                        @if(dungeon.difficultyDetails.cost?.gold) { <span class="text-red-400">Cost: 💰{{ formatNumber(dungeon.difficultyDetails.cost.gold) }}</span> }
+                        @if(dungeon.difficultyDetails.cost?.prestigePoints) { <span class="text-red-400">Cost: 💎{{ formatNumber(dungeon.difficultyDetails.cost.prestigePoints) }}</span> }
+                      </div>
+                    </div>
+                    @if(dungeon.isAvailable) {
+                      <button (click)="startDungeonRun(dungeon.id, selectedDifficulty())" [disabled]="dungeon.isActive || !dungeon.canAfford" class="px-4 py-2 bg-red-600 text-white font-bold rounded-md hover:bg-red-500 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
+                        {{ dungeon.isActive ? 'Running' : 'Start' }}
+                      </button>
+                    } @else {
+                      <div class="text-center px-4">
+                        <p class="text-sm font-semibold text-red-400">Locked</p>
+                        <p class="text-xs text-gray-400">Stage {{ dungeon.difficultyDetails.stageRequirement }}</p>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-center text-gray-500 italic text-sm py-2">All dungeon slots are full.</p>
+            }
+          </div>
+        </div>
+      }
+      @case('bounties') {
+        <div class="animate-fadeIn space-y-6">
+          <div>
+            <h3 class="text-xl font-orbitron text-gray-300 mb-2">Active Bounties</h3>
+            @if(activeBounties().length > 0) {
+              <div class="space-y-2">
+                 @for(bounty of activeBounties(); track bounty.startTime) {
+                  <div class="bg-gray-900/50 p-3 rounded-lg">
+                    <div class="flex justify-between items-center">
+                      <div>
+                        <p class="font-semibold text-white">{{ bounty.details.name }}</p>
+                         <div class="flex items-center gap-2 mt-1">
+                          @for(hero of bounty.heroes; track hero.id) {
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border" [class]="getRarityBorderClass(hero.rarity)" [appTooltip]="hero.name + ' (Lvl ' + hero.level + ')'">
+                                {{ getHeroInitials(hero.name) }}
+                            </div>
+                          }
+                        </div>
+                      </div>
+                      @if (bounty.remainingSeconds <= 0) {
+                        <button (click)="claimBounty(bounty)" class="px-4 py-2 bg-red-600 text-white font-bold rounded-md hover:bg-red-500 transition-colors animate-pulse-glow">Claim</button>
+                      }
+                    </div>
+                    @if (bounty.remainingSeconds > 0) {
+                      <div class="w-full bg-gray-700 rounded-full h-2.5 my-1"><div class="bg-red-500 h-2.5 rounded-full" [style.width.%]="bounty.progress"></div></div>
+                      <p class="text-xs font-orbitron text-red-300 text-right">{{ formatDuration(bounty.remainingSeconds) }}</p>
+                    }
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-center text-gray-500 italic text-sm py-2">No active bounties.</p>
+            }
+          </div>
+          <div>
+            <h3 class="text-xl font-orbitron text-gray-300 mb-2">Available Bounties</h3>
+            <div class="space-y-2">
+              @for(bounty of allDungeonBounties; track bounty.id) {
+                <div class="bg-gray-900/50 p-3 rounded-lg flex justify-between items-center">
+                  <div>
+                    <h4 class="font-semibold text-white">{{bounty.name}}</h4>
+                    <p class="text-xs text-gray-400 italic">{{bounty.description}}</p>
+                    <div class="flex items-center gap-4 text-sm mt-1">
+                      <span>🕒 {{ formatDuration(bounty.durationSeconds) }}</span>
+                      <span>👥 Requires {{bounty.requiredHeroCount}}</span>
+                      <span class="text-red-300">🔑 +{{bounty.rewards.dungeonCrests}}</span>
+                    </div>
+                  </div>
+                  <button (click)="openBountyModal(bounty)" class="px-4 py-2 bg-red-800 text-white font-bold rounded-md hover:bg-red-700 transition-colors">Select Team</button>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+      @case('shop') {
+        <div class="animate-fadeIn max-w-4xl mx-auto">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            @for(item of shopItems(); track item.id) {
+              <div class="bg-gray-900/50 p-4 rounded-lg flex flex-col border-t-2 border-red-500/50" [class.opacity-50]="item.soldOut">
+                <h3 class="font-orbitron text-lg text-white">{{ item.name }}</h3>
+                <p class="text-sm text-gray-400 flex-grow">{{ item.description }}</p>
+                @if(item.stock) {
+                  <p class="text-xs text-gray-500 text-center my-2">Purchased: {{ gameService().gameState().purchasedDungeonShopItems[item.id] || 0 }} / {{ item.stock }}</p>
+                }
+                <button (click)="purchaseItem(item.id)" [disabled]="gameService().gameState().dungeonCrests < item.cost || item.soldOut" class="mt-auto w-full py-2 bg-red-600 text-white font-bold rounded-md hover:bg-red-500 transition-colors disabled:bg-gray-700 disabled:cursor-not-allowed">
+                  {{ item.soldOut ? 'Sold Out' : 'Buy 🔑 ' + formatNumber(item.cost) }}
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+  </main>
+
+  <!-- Claim Notifications -->
+  @if(dungeonClaimResult(); as result) {
+    <div class="absolute bottom-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-drop-notification">
+      <div class="bg-gray-900/90 border-2 border-red-500 rounded-lg p-3 text-center shadow-2xl">
+          <p class="text-sm font-bold text-red-300">Dungeon Run Complete!</p>
+          @if(result.gold > 0) { <h3 class="font-semibold text-lg text-yellow-300">+{{formatNumber(result.gold)}} Gold</h3> }
+          @if(result.crests > 0) { <h3 class="font-semibold text-lg text-red-300">+{{formatNumber(result.crests)}} Crests</h3> }
+          @if(result.petCrystals > 0) { <h3 class="font-semibold text-lg text-purple-300">+{{formatNumber(result.petCrystals)}} Pet Crystals</h3> }
+          @if(result.item; as item) { <h3 class="font-semibold text-lg" [class]="getRarityTextColor(item.rarity)">Found: {{item.name}}</h3> }
+          @if(result.petEgg) { <h3 class="font-semibold text-lg text-teal-300">Found a Pet Egg! 🥚</h3> }
+      </div>
+    </div>
+  }
+  @if(bountyClaimResult(); as result) {
+    <div class="absolute bottom-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-drop-notification">
+      <div class="bg-gray-900/90 border-2 border-red-500 rounded-lg p-3 text-center shadow-2xl">
+          <p class="text-sm font-bold text-red-300">Bounty Complete!</p>
+          @if(result.gold > 0) { <h3 class="font-semibold text-lg text-yellow-300">+{{formatNumber(result.gold)}} Gold</h3> }
+          @if(result.crests > 0) { <h3 class="font-semibold text-lg text-red-300">+{{formatNumber(result.crests)}} Crests</h3> }
+          @if(result.petCrystals > 0) { <h3 class="font-semibold text-lg text-purple-300">+{{formatNumber(result.petCrystals)}} Pet Crystals</h3> }
+          @if(result.essence > 0) { <h3 class="font-semibold text-lg text-yellow-300">+{{formatNumber(result.essence)}} Essence</h3> }
+      </div>
+    </div>
+  }
+  @if(purchaseResult(); as result) {
+     <div class="absolute bottom-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-drop-notification">
+      <div class="bg-gray-900/90 border-2 border-green-500 rounded-lg p-3 text-center shadow-2xl">
+          <p class="text-sm font-bold text-green-300">Purchased: {{result.name}}</p>
+      </div>
+    </div>
+  }
+
+  <!-- Bounty Team Selection Modal -->
+  @if(isBountyModalOpen() && bountyToStart(); as bounty) {
+    <div class="absolute inset-0 bg-black/70 flex items-center justify-center z-50" (click)="closeBountyModal()">
+      <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl border-2 border-red-500 animate-modal-fade-in flex flex-col" (click)="$event.stopPropagation()">
+        <header class="p-4 border-b border-gray-700"><h2 class="text-2xl font-orbitron text-red-400">Select Team for {{bounty.name}}</h2></header>
+        <div class="flex-grow flex flex-col md:flex-row overflow-hidden">
+          <div class="w-full md:w-2/5 p-4 border-b md:border-b-0 md:border-r border-gray-700">
+            <h3 class="text-lg font-semibold mb-2">Requirements</h3>
+            <div class="flex items-center gap-2 text-sm mb-4" [class.text-green-400]="canDispatchBounty()" [class.text-red-400]="!canDispatchBounty()">
+              <span>{{ canDispatchBounty() ? '✓' : '✗' }}</span>
+              <span>Assign {{ bounty.requiredHeroCount }} Heroes ({{ selectedHeroesForBounty().length }}/{{ bounty.requiredHeroCount }})</span>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Selected Team</h3>
+            <div class="flex-grow bg-black/20 rounded-lg p-2 space-y-1 overflow-y-auto">
+              @for(hero of selectedHeroesForBounty(); track hero.id) { <div class="bg-gray-700 p-1.5 rounded-md text-sm font-semibold">{{ hero.name }}</div> }
+              @if(selectedHeroesForBounty().length === 0) { <p class="text-center text-gray-500 text-sm italic py-4">Select heroes.</p> }
+            </div>
+          </div>
+          <div class="w-full md:w-3/5 p-4 flex flex-col">
+            <h3 class="text-lg font-semibold mb-2">Available Heroes</h3>
+            <div class="flex-grow bg-black/20 rounded-lg p-2 overflow-y-auto">
+              @if (availableHeroesForBounty().length > 0) {
+                <div class="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                  @for(hero of availableHeroesForBounty(); track hero.id) {
+                    <div (click)="toggleHeroSelection(hero.id)" class="relative p-2 rounded-lg border-2 flex flex-col items-center gap-1 cursor-pointer bg-gray-900/50" [class]="selectedHeroIds().includes(hero.id) ? 'border-red-400 ring-2 ring-red-400' : 'border-gray-600 hover:border-red-500'">
+                      @if(selectedHeroIds().includes(hero.id)) { <div class="absolute inset-0 bg-red-500/30 rounded-md"></div> }
+                      <p class="font-semibold text-xs text-center truncate w-full">{{ hero.name }}</p>
+                      <p class="text-xs text-gray-400">Lvl {{ hero.level }}</p>
+                    </div>
+                  }
+                </div>
+              } @else { <p class="text-center text-gray-500 text-sm italic py-4">No heroes available.</p> }
+            </div>
+          </div>
+        </div>
+        <footer class="p-4 border-t border-gray-700 flex justify-end gap-4">
+          <button (click)="closeBountyModal()" class="px-4 py-2 bg-gray-600 font-bold rounded-md hover:bg-gray-500">Cancel</button>
+          <button (click)="dispatchBounty()" [disabled]="!canDispatchBounty()" class="px-4 py-2 bg-red-600 text-white font-bold rounded-md hover:bg-red-500 disabled:bg-gray-500">Dispatch</button>
+        </footer>
+      </div>
+    </div>
+  }
+</div>

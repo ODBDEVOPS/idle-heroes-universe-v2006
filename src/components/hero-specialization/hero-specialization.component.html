@@ -1,0 +1,159 @@
+<div class="h-full w-full bg-gray-900 flex flex-col animate-fadeIn overflow-hidden relative p-4">
+  <header class="text-center mb-4 z-10 flex justify-between items-center">
+    <button (click)="back()" class="bg-gray-700/50 hover:bg-gray-600/50 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+        Hero Command
+    </button>
+    <div class="flex-grow">
+      <h1 class="text-3xl font-orbitron text-purple-300">Specialization</h1>
+      @if (hero(); as h) {
+        <p class="text-gray-400">Chart the course for {{ h.name }}'s evolution.</p>
+      }
+    </div>
+    <div class="w-48 text-right font-semibold bg-gray-800/70 px-4 py-1 rounded-full border border-yellow-400/80">
+      <span class="shimmer-text-gold">🌟 {{ gameService().gameState().essenceOfLoyalty }}</span>
+    </div>
+  </header>
+
+  <div class="relative z-10 flex-grow flex flex-col md:flex-row overflow-hidden gap-4">
+    <!-- Hero List -->
+    <div class="w-full md:w-1/3 flex flex-col bg-black/30 p-2 rounded-lg border border-gray-700/50">
+      <h2 class="text-lg font-orbitron text-gray-300 text-center mb-2 flex-shrink-0">Select a Hero</h2>
+      <div class="flex-grow overflow-y-auto pr-2 space-y-1">
+        @for(h of eligibleHeroes(); track h.id) {
+          <button (click)="selectHero(h.id)" class="p-2 w-full rounded-lg flex items-center gap-3 text-left transition-colors duration-200" [class.bg-purple-900/50]="selectedHeroId() === h.id" [class.hover:bg-gray-700/60]="selectedHeroId() !== h.id">
+            <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center border-2 text-sm font-bold" [class]="getRarityBorderClass(h.rarity)">{{ getHeroInitials(h.name) }}</div>
+            <div>
+              <p class="font-bold text-white leading-tight">{{ h.name }}</p>
+              <p class="text-xs text-gray-400">Level {{ h.level }}</p>
+            </div>
+          </button>
+        } @empty {
+            <p class="text-center text-gray-500 italic py-4">No heroes are eligible for specialization.</p>
+        }
+      </div>
+    </div>
+    
+    <!-- Specialization Tree -->
+    <div class="w-full md:w-2/3 flex-grow flex items-center justify-center bg-black/30 p-4 rounded-lg border border-gray-700/50 overflow-y-auto">
+      @if(hero(); as h) {
+        @if(path(); as p) {
+          <div class="w-full max-w-4xl mx-auto flex flex-col items-center gap-8 animate-content-fade-in">
+            <!-- Base Class -->
+            <div class="flex flex-col items-center">
+              <div class="w-24 h-24 rounded-lg flex-shrink-0 flex items-center justify-center border-4 bg-gray-800" [class]="getRarityBorderClass(h.rarity)">
+                <span class="font-orbitron text-4xl text-gray-200 drop-shadow-lg">{{ getHeroInitials(h.name) }}</span>
+              </div>
+              <h3 class="font-orbitron text-xl font-bold text-white mt-2">{{ p.baseClass }}</h3>
+              <p class="text-sm text-gray-400">Base Class</p>
+            </div>
+            
+            <!-- Promotion 1 -->
+            <div class="flex flex-col items-center gap-4">
+               <div class="w-px h-8 bg-gray-600"></div>
+               <p class="text-xs text-gray-500 font-bold uppercase tracking-widest">Promotion 1 (Lvl {{ p.promotion1.levelReq }})</p>
+               <div class="flex justify-center gap-12">
+                  @for(node of promotion1Nodes(); track node.spec.id) {
+                      <div class="relative flex flex-col items-center group">
+                        <div class="w-20 h-20 rounded-full flex items-center justify-center text-3xl border-4 transition-all"
+                             [class.bg-purple-600]="node.status === 'unlocked'" [class.border-purple-300]="node.status === 'unlocked'"
+                             [class.bg-green-700]="node.status === 'available'" [class.border-green-400]="node.status === 'available'" [class.animate-pulse-glow]="node.status === 'available'"
+                             [class.bg-gray-800]="node.status === 'locked'" [class.border-gray-600]="node.status === 'locked'">
+                             {{ node.spec.icon }}
+                        </div>
+                        <h4 class="mt-2 font-orbitron font-semibold text-lg" [class.text-white]="node.status !== 'locked'" [class.text-gray-500]="node.status === 'locked'">{{ node.spec.name }}</h4>
+                        
+                        @if (node.status === 'unlocked') {
+                          <div class="mt-2 text-xs text-left bg-black/30 p-2 rounded-md border border-purple-400 w-48">
+                            <p class="font-bold text-gray-300 text-center mb-1 border-b border-gray-700 pb-1">Active Bonuses</p>
+                            <div class="space-y-1">
+                              @if (node.spec.statBonuses.dpsPercent) { <p class="text-green-400">+{{ node.spec.statBonuses.dpsPercent * 100 }}% Total DPS</p> }
+                              @if (node.spec.statBonuses.skillDamagePercent) { <p class="text-green-400">+{{ node.spec.statBonuses.skillDamagePercent * 100 }}% Skill Damage</p> }
+                              @if (node.spec.roleOverride) { <p class="text-cyan-400">Role changes to {{ node.spec.roleOverride }}</p> }
+                              @if (node.spec.skillModification) {
+                                <div class="mt-2 pt-1 border-t border-gray-700">
+                                  <p class="text-yellow-400 font-semibold">Skill Updated:</p>
+                                  <p class="text-gray-300 italic">"{{ node.spec.skillModification.newDescription }}"</p>
+                                </div>
+                              }
+                            </div>
+                          </div>
+                        } @else if(node.status === 'available') {
+                          <button (click)="promote(node.spec.id)" [disabled]="isPromoting()" class="mt-2 px-4 py-1 bg-green-600 text-white font-bold rounded-md hover:bg-green-500">Promote (🌟{{p.promotion1.cost}})</button>
+                        } @else if(node.status === 'locked') {
+                          <div class="mt-2 text-xs text-red-400 font-semibold flex gap-2">@for(req of node.requirements; track req) {<span>{{req}}</span>}</div>
+                        }
+
+                        <!-- Tooltip -->
+                        <div class="absolute bottom-full mb-2 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-gray-700">
+                            <p class="font-bold text-purple-300">{{node.spec.name}}</p>
+                            <p>{{node.spec.description}}</p>
+                        </div>
+                      </div>
+                  }
+               </div>
+            </div>
+
+            <!-- Promotion 2 -->
+            @if (promotion2Nodes().length > 0) {
+              <div class="flex flex-col items-center gap-4">
+                <div class="w-px h-8 bg-gray-600"></div>
+                <p class="text-xs text-gray-500 font-bold uppercase tracking-widest">Promotion 2 (Lvl {{ p.promotion2.levelReq }})</p>
+                <div class="flex justify-center gap-12">
+                  @for(node of promotion2Nodes(); track node.spec.id) {
+                        <div class="relative flex flex-col items-center group">
+                          <div class="w-20 h-20 rounded-full flex items-center justify-center text-3xl border-4 transition-all"
+                              [class.bg-purple-600]="node.status === 'unlocked'" [class.border-purple-300]="node.status === 'unlocked'"
+                              [class.bg-green-700]="node.status === 'available'" [class.border-green-400]="node.status === 'available'" [class.animate-pulse-glow]="node.status === 'available'"
+                              [class.bg-gray-800]="node.status === 'locked'" [class.border-gray-600]="node.status === 'locked'">
+                              {{ node.spec.icon }}
+                          </div>
+                          <h4 class="mt-2 font-orbitron font-semibold text-lg" [class.text-white]="node.status !== 'locked'" [class.text-gray-500]="node.status === 'locked'">{{ node.spec.name }}</h4>
+
+                          @if (node.status === 'unlocked') {
+                            <div class="mt-2 text-xs text-left bg-black/30 p-2 rounded-md border border-purple-400 w-48">
+                              <p class="font-bold text-gray-300 text-center mb-1 border-b border-gray-700 pb-1">Active Bonuses</p>
+                              <div class="space-y-1">
+                                @if (node.spec.statBonuses.dpsPercent) { <p class="text-green-400">+{{ node.spec.statBonuses.dpsPercent * 100 }}% Total DPS</p> }
+                                @if (node.spec.statBonuses.skillDamagePercent) { <p class="text-green-400">+{{ node.spec.statBonuses.skillDamagePercent * 100 }}% Skill Damage</p> }
+                                @if (node.spec.roleOverride) { <p class="text-cyan-400">Role changes to {{ node.spec.roleOverride }}</p> }
+                                @if (node.spec.skillModification) {
+                                  <div class="mt-2 pt-1 border-t border-gray-700">
+                                    <p class="text-yellow-400 font-semibold">Skill Updated:</p>
+                                    <p class="text-gray-300 italic">"{{ node.spec.skillModification.newDescription }}"</p>
+                                  </div>
+                                }
+                              </div>
+                            </div>
+                          } @else if(node.status === 'available') {
+                            <button (click)="promote(node.spec.id)" [disabled]="isPromoting()" class="mt-2 px-4 py-1 bg-green-600 text-white font-bold rounded-md hover:bg-green-500">Promote (🌟{{p.promotion2.cost}})</button>
+                          } @else if(node.status === 'locked') {
+                            <div class="mt-2 text-xs text-red-400 font-semibold flex gap-2">@for(req of node.requirements; track req) {<span>{{req}}</span>}</div>
+                          }
+                          
+                          <!-- Tooltip -->
+                          <div class="absolute bottom-full mb-2 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-gray-700">
+                              <p class="font-bold text-purple-300">{{node.spec.name}}</p>
+                              <p>{{node.spec.description}}</p>
+                          </div>
+                        </div>
+                    }
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="text-center text-gray-500">
+            <p>{{h.name}} does not have a specialization path yet.</p>
+          </div>
+        }
+      } @else {
+        <div class="text-center text-gray-500 m-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 2-1-2-.257-.257A6 6 0 1118 8zM10 2a4 4 0 100 8 4 4 0 000-8z" /></svg>
+          <h2 class="mt-4 text-2xl font-orbitron">Select a Hero</h2>
+          <p>Choose an eligible hero from the list to view their specialization path.</p>
+        </div>
+      }
+    </div>
+  </div>
+</div>

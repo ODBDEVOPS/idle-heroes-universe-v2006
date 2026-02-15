@@ -1,0 +1,166 @@
+<div class="h-full w-full bg-gray-800 p-4 flex flex-col animate-fadeIn">
+  <header class="text-center mb-4">
+    <h1 class="text-3xl font-orbitron text-lime-400">Expeditions</h1>
+    <p class="text-gray-400">Send your heroes on missions for valuable rewards.</p>
+    <div class="mt-2 text-lg font-semibold text-lime-200 bg-gray-900/50 rounded-full px-4 py-1 inline-block border border-lime-500/50">
+      Available Slots: <span class="font-orbitron">{{ expeditionSlots().current }} / {{ expeditionSlots().max }}</span>
+    </div>
+  </header>
+  
+  <div class="flex-grow overflow-y-auto pr-2 space-y-6">
+    <!-- Ongoing Expeditions -->
+    <div>
+      <h2 class="text-xl font-orbitron text-gray-300 mb-2 border-b-2 border-gray-700 pb-1">Ongoing Expeditions</h2>
+      @if (ongoingExpeditions().length > 0) {
+        <div class="space-y-3">
+          @for (exp of ongoingExpeditions(); track exp.startTime) {
+            <div class="bg-gray-900 rounded-lg p-3 border-l-4 border-lime-500">
+              <div class="flex justify-between items-center">
+                <div>
+                  <h3 class="font-bold text-white">{{ exp.details.name }}</h3>
+                  <div class="flex items-center gap-2 mt-1">
+                    @for(hero of exp.heroes; track hero.id) {
+                       <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border" [class]="getRarityBorderClass(hero.rarity)" [appTooltip]="hero.name + ' (Lvl ' + hero.level + ')'">
+                          {{ getHeroInitials(hero.name) }}
+                       </div>
+                    }
+                  </div>
+                </div>
+                <div class="text-center">
+                  @if(exp.remainingSeconds > 0) {
+                    <p class="font-orbitron text-xl text-lime-400">{{ formatDuration(exp.remainingSeconds) }}</p>
+                    <p class="text-xs text-gray-400">Remaining</p>
+                  } @else {
+                    <button (click)="claim(exp)" class="px-4 py-2 bg-lime-600 text-white font-bold rounded-md hover:bg-lime-500 transition-all transform hover:scale-105 active:scale-95 animate-pulse-glow">
+                      Claim Reward
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="text-gray-500 italic text-center py-2">No expeditions currently in progress.</p>
+      }
+    </div>
+
+    <!-- Available Expeditions -->
+    <div>
+      <h2 class="text-xl font-orbitron text-gray-300 mb-2 border-b-2 border-gray-700 pb-1">Available Expeditions</h2>
+      @if(expeditionSlots().current < expeditionSlots().max) {
+        <div class="space-y-3">
+          @for(exp of availableExpeditions(); track exp.id) {
+             <div class="bg-gray-900/50 rounded-lg p-3">
+                <h3 class="font-bold text-lg text-white">{{ exp.name }}</h3>
+                <p class="text-sm text-gray-400 italic my-1">{{ exp.description }}</p>
+                <div class="flex flex-wrap gap-x-4 gap-y-2 text-sm my-2">
+                  <span class="font-semibold">🕒 {{ formatDuration(exp.durationSeconds) }}</span>
+                  <span class="font-semibold">👥 Min {{exp.requirements.minHeroes}} Heroes</span>
+                   @if(exp.requirements.minTotalLevel) {
+                    <span class="font-semibold">📈 Min Lvl {{exp.requirements.minTotalLevel}}</span>
+                   }
+                </div>
+                <div class="flex justify-between items-end">
+                  <div>
+                    <p class="text-xs font-bold text-yellow-300">REWARDS:</p>
+                     <p class="text-sm text-gray-200">💰 {{ formatNumber(exp.rewards.gold) }} Gold</p>
+                     @if(exp.rewards.prestigePoints) { <p class="text-sm text-gray-200">💎 {{ exp.rewards.prestigePoints }} Points</p> }
+                     @if(exp.rewards.equipmentDrop) { <p class="text-sm text-gray-200">📦 {{ exp.rewards.equipmentDrop.chance * 100 }}% Item</p> }
+                  </div>
+                   <button (click)="openModal(exp)" class="px-4 py-2 bg-lime-700 text-white font-bold rounded-md hover:bg-lime-600 transition-all transform hover:scale-105 active:scale-95">
+                      Select Team
+                   </button>
+                </div>
+             </div>
+          }
+        </div>
+      } @else {
+         <p class="text-gray-500 italic text-center py-2">All expedition slots are currently in use.</p>
+      }
+    </div>
+  </div>
+
+  <!-- Claim Notification -->
+  @if(claimResult(); as result) {
+    <div class="absolute bottom-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-drop-notification">
+      <div class="bg-gray-900/90 border-2 border-lime-500 rounded-lg p-3 text-center shadow-2xl">
+          <p class="text-sm font-bold text-lime-300">Expedition Complete!</p>
+          @if(result.gold > 0) { <h3 class="font-semibold text-lg text-yellow-300">+{{formatNumber(result.gold)}} Gold</h3> }
+          @if(result.prestige > 0) { <h3 class="font-semibold text-lg text-cyan-300">+{{formatNumber(result.prestige)}} Points</h3> }
+          @if(result.item; as item) { <h3 class="font-semibold text-lg" [class]="getRarityTextColor(item.rarity)">Found: {{item.name}}</h3> }
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Team Selection Modal -->
+@if(isModalOpen() && expeditionToStart(); as expedition) {
+  <div class="absolute inset-0 bg-black/70 flex items-center justify-center z-50" (click)="closeModal()">
+    <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl border-2 border-lime-500 animate-modal-fade-in flex flex-col" (click)="$event.stopPropagation()">
+      <header class="p-4 border-b border-gray-700">
+        <h2 class="text-2xl font-orbitron text-lime-400">Assemble Team</h2>
+        <p class="text-gray-400">{{ expedition.name }}</p>
+      </header>
+      
+      <div class="flex-grow flex flex-col md:flex-row overflow-hidden">
+        <!-- Left: Requirements & Team -->
+        <div class="w-full md:w-2/5 p-4 border-b md:border-b-0 md:border-r border-gray-700 flex flex-col">
+          <h3 class="text-lg font-semibold mb-2">Requirements</h3>
+          <div class="space-y-1 mb-4">
+            @for (check of requirementChecks(); track check.text) {
+              <div class="flex items-center gap-2 text-sm" [class.text-green-400]="check.isMet" [class.text-red-400]="!check.isMet">
+                @if (check.isMet) { <span class="w-4 h-4">✓</span> } @else { <span class="w-4 h-4">✗</span> }
+                <span>{{ check.text }}</span>
+                <span class="font-mono">({{ check.current }}/{{ check.required }})</span>
+              </div>
+            }
+          </div>
+          
+          <h3 class="text-lg font-semibold mb-2">Selected Team ({{ selectedHeroes().length }})</h3>
+          <div class="flex-grow bg-black/20 rounded-lg p-2 space-y-1 overflow-y-auto">
+            @for(hero of selectedHeroes(); track hero.id) {
+              <div class="bg-gray-700 p-1.5 rounded-md text-sm font-semibold">{{ hero.name }} <span class="text-gray-400">(Lvl {{ hero.level }})</span></div>
+            } @empty {
+              <p class="text-center text-gray-500 text-sm italic py-4">Select heroes from the list.</p>
+            }
+          </div>
+        </div>
+
+        <!-- Right: Hero Roster -->
+        <div class="w-full md:w-3/5 p-4 flex flex-col">
+          <h3 class="text-lg font-semibold mb-2">Available Heroes</h3>
+          <div class="flex-grow bg-black/20 rounded-lg p-2 overflow-y-auto">
+            @if (availableHeroes().length > 0) {
+              <div class="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                @for(hero of availableHeroes(); track hero.id) {
+                  <div (click)="toggleHeroSelection(hero.id)" 
+                       class="relative p-2 rounded-lg border-2 flex flex-col items-center gap-1 cursor-pointer transition-all duration-200 bg-gray-900/50"
+                       [class]="selectedHeroIds().includes(hero.id) ? 'border-lime-400 ring-2 ring-lime-400' : 'border-gray-600 hover:border-lime-500'">
+                      @if(selectedHeroIds().includes(hero.id)) {
+                        <div class="absolute inset-0 bg-lime-500/30 rounded-md flex items-center justify-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-lime-200" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        </div>
+                      }
+                      <div class="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center border-2 text-xl font-bold" [class]="getRarityBorderClass(hero.rarity)">
+                          {{ getHeroInitials(hero.name) }}
+                      </div>
+                      <p class="font-semibold text-xs text-center truncate w-full">{{ hero.name }}</p>
+                      <p class="text-xs text-gray-400">Lvl {{ hero.level }} <span [class]="getRarityTextColor(hero.rarity)">●</span> {{ hero.role }}</p>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-center text-gray-500 text-sm italic py-4">No heroes are available.</p>
+            }
+          </div>
+        </div>
+      </div>
+      
+      <footer class="p-4 border-t border-gray-700 flex justify-end gap-4">
+        <button (click)="closeModal()" class="px-4 py-2 bg-gray-600 font-bold rounded-md hover:bg-gray-500 transition-colors">Cancel</button>
+        <button (click)="dispatchTeam()" [disabled]="!canDispatch()" class="px-4 py-2 bg-lime-600 text-white font-bold rounded-md hover:bg-lime-500 transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed">Dispatch</button>
+      </footer>
+    </div>
+  </div>
+}

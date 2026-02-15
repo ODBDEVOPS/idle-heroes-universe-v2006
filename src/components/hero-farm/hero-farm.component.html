@@ -1,0 +1,137 @@
+<div class="h-full w-full bg-gray-900 flex flex-col animate-fadeIn overflow-hidden relative p-4">
+  <!-- BG -->
+  <div class="absolute inset-0 bg-gradient-to-br from-indigo-900/40 via-cyan-900/30 to-slate-900/60 z-0"></div>
+  <div class="absolute inset-0 z-0 pointer-events-none animate-bg-float" style="animation-duration: 120s;">
+    <div class="star-particle" style="top: 20%; left: 10%; animation-delay: 0s;"></div>
+    <div class="star-particle" style="top: 80%; left: 95%; animation-delay: 1.5s;"></div>
+  </div>
+
+  <header class="text-center mb-4 z-10 flex justify-between items-center">
+    <button (click)="viewChange.emit('heroCommand')" class="bg-gray-700/50 hover:bg-gray-600/50 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+        Hero Command
+    </button>
+    <div class="flex-grow">
+      <h1 class="text-3xl font-orbitron text-cyan-300">Hero Nexus</h1>
+      <p class="text-gray-400">Generate Hero Essence to empower your roster.</p>
+    </div>
+    <div class="w-48 text-right font-semibold bg-gray-800/70 px-4 py-1 rounded-full border border-cyan-400/80">
+        <span class="text-cyan-300">💠 {{ formatNumber(gameService().gameState().heroEssence) }}</span>
+    </div>
+  </header>
+
+  <div class="relative z-10 flex-grow grid grid-cols-1 lg:grid-cols-2 gap-4 overflow-hidden">
+    <!-- Left: Nexus Core -->
+    <div class="bg-black/30 p-4 rounded-xl border border-gray-700/50 flex flex-col items-center justify-center">
+      <h2 class="text-2xl font-orbitron text-white mb-4">Nexus Core</h2>
+      <div class="flex gap-4 mb-6">
+        @for (hero of farmSlots(); track $index) {
+          <div (click)="!hero && openAssignModal($index)" class="relative aspect-square w-24 h-24 bg-gray-800/50 rounded-full flex flex-col items-center justify-center border-2 transition-all duration-200"
+               [class]="hero ? getRarityBorderClass(hero.rarity) : 'border-gray-700 border-dashed cursor-pointer hover:border-cyan-400'">
+            @if(hero) {
+              <div [appTooltip]="hero.name + ' (Lvl ' + hero.level + ')'">
+                <span class="font-orbitron text-3xl text-gray-200">{{ getHeroInitials(hero.name) }}</span>
+                <span class="text-xs text-gray-400 mt-1">Lvl {{ hero.level }}</span>
+                <button (click)="removeHero($index, $event)" class="absolute -top-1 -right-1 w-6 h-6 bg-red-600 rounded-full text-white text-xs font-bold flex items-center justify-center border-2 border-gray-900 hover:bg-red-500">X</button>
+              </div>
+            } @else {
+              <span class="text-4xl text-gray-600">+</span>
+            }
+          </div>
+        }
+      </div>
+      <div class="bg-gray-900/70 p-4 rounded-lg text-center w-full max-w-sm">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-sm text-gray-400">Hero Essence Rate</p>
+            <p class="text-lg font-orbitron text-cyan-300">💠 {{ essenceRate().toFixed(2) }}/hr</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-400">Loyalty Essence Rate</p>
+            <p class="text-lg font-orbitron text-yellow-300">🌟 {{ loyaltyEssenceRate().toFixed(2) }}/hr</p>
+          </div>
+        </div>
+        <div class="h-px bg-gray-700 my-3"></div>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="text-sm text-gray-400">Accumulated 💠</p>
+              <p class="text-2xl font-orbitron text-white">{{ formatNumber(gameService().gameState().heroFarm.accumulatedEssence) }}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-400">Accumulated 🌟</p>
+              <p class="text-2xl font-orbitron text-white">{{ formatNumber(gameService().gameState().heroFarm.accumulatedEssenceOfLoyalty) }}</p>
+            </div>
+        </div>
+        <button (click)="collectResources()" [disabled]="gameService().gameState().heroFarm.accumulatedEssence < 1 && gameService().gameState().heroFarm.accumulatedEssenceOfLoyalty < 1" class="mt-4 w-full py-3 bg-cyan-600 text-white font-bold rounded-md hover:bg-cyan-500 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">Collect All</button>
+      </div>
+    </div>
+    
+    <!-- Right: Shard Exchange -->
+    <div class="bg-black/30 p-2 rounded-xl border border-gray-700/50 flex flex-col">
+       <div class="p-2 flex-shrink-0">
+         <h2 class="text-2xl font-orbitron text-white text-center">Shard Exchange</h2>
+         <div class="flex items-center justify-center gap-2 mt-2 bg-gray-900/50 p-1 rounded-lg">
+            <span class="text-sm text-gray-400">Buy Amount:</span>
+            <button (click)="setBuyAmount(1)" class="px-3 py-1 text-xs rounded" [class.bg-purple-600]="buyAmount() === 1" [class.bg-gray-700]="buyAmount() !== 1">x1</button>
+            <button (click)="setBuyAmount(5)" class="px-3 py-1 text-xs rounded" [class.bg-purple-600]="buyAmount() === 5" [class.bg-gray-700]="buyAmount() !== 5">x5</button>
+            <button (click)="setBuyAmount(10)" class="px-3 py-1 text-xs rounded" [class.bg-purple-600]="buyAmount() === 10" [class.bg-gray-700]="buyAmount() !== 10">x10</button>
+         </div>
+       </div>
+       <div class="flex-grow overflow-y-auto space-y-2 p-2">
+        @for(item of shardShopItems(); track item.hero.id) {
+            <div class="bg-gray-800/50 p-2 rounded-lg flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center border-2 text-sm font-bold" [class]="getRarityBorderClass(item.hero.rarity)">{{ getHeroInitials(item.hero.name) }}</div>
+                    <div>
+                        <p class="font-bold text-white text-sm">{{ item.hero.name }}</p>
+                        <p class="text-xs text-gray-400">Shards: {{ gameService().gameState().heroShards[item.hero.id] || 0 }}</p>
+                    </div>
+                </div>
+                <button (click)="buyShards(item.hero.id)" [disabled]="gameService().gameState().heroEssence < (item.cost * buyAmount())" class="px-3 py-2 bg-purple-600 text-white font-bold rounded-md hover:bg-purple-700 transition-colors disabled:bg-gray-600 text-sm">
+                    <span>Buy x{{buyAmount()}}</span>
+                    <span class="text-xs text-purple-200">💠 {{ formatNumber(item.cost * buyAmount()) }}</span>
+                </button>
+            </div>
+        }
+       </div>
+    </div>
+  </div>
+
+  <!-- Assign Hero Modal -->
+  @if(isAssignModalOpen()) {
+    <div class="absolute inset-0 bg-black/70 flex items-center justify-center z-50" (click)="closeAssignModal()">
+      <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl border-2 border-cyan-500 animate-pop-in-soft flex flex-col" (click)="$event.stopPropagation()">
+        <header class="p-4 border-b border-gray-700"><h2 class="text-2xl font-orbitron text-cyan-400">Assign Hero to Nexus</h2></header>
+        <div class="p-4 overflow-y-auto max-h-[60vh]">
+            @if(availableHeroesForFarm().length > 0) {
+                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    @for(hero of availableHeroesForFarm(); track hero.id) {
+                        <div (click)="assignHero(hero.id)" class="bg-gray-900/50 p-2 rounded-lg border-2 border-gray-600 hover:border-cyan-400 flex flex-col items-center gap-1 cursor-pointer transition-colors text-center">
+                            <div class="w-16 h-16 rounded-full flex-shrink-0 flex items-center justify-center border-2 text-xl font-bold" [class]="getRarityBorderClass(hero.rarity)">{{ getHeroInitials(hero.name) }}</div>
+                            <p class="font-semibold text-sm truncate w-full">{{ hero.name }}</p>
+                            <p class="text-xs text-gray-400">Lvl {{ hero.level }}</p>
+                        </div>
+                    }
+                 </div>
+            } @else {
+                <p class="text-center text-gray-500 italic py-8">No available heroes to assign. Heroes must not be on your active team, an expedition, or a bounty.</p>
+            }
+        </div>
+        <footer class="p-2 border-t border-gray-700 text-center"><button (click)="closeAssignModal()" class="text-gray-400 hover:text-white font-semibold py-1 px-4">Cancel</button></footer>
+      </div>
+    </div>
+  }
+
+  @if(collectionNotice(); as amounts) {
+    <div class="absolute bottom-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-drop-notification">
+      <div class="bg-gray-900/90 border-2 border-cyan-500 rounded-lg p-3 text-center shadow-2xl space-y-1">
+          @if(amounts.heroEssence > 0) {
+            <h3 class="font-semibold text-lg text-cyan-300">+{{formatNumber(amounts.heroEssence)}} Hero Essence</h3>
+          }
+          @if(amounts.loyaltyEssence > 0) {
+            <h3 class="font-semibold text-lg text-yellow-300">+{{formatNumber(amounts.loyaltyEssence)}} Essence of Loyalty</h3>
+          }
+      </div>
+    </div>
+  }
+</div>
