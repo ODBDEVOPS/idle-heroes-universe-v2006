@@ -1,0 +1,140 @@
+<div class="h-full w-full relative overflow-y-auto flex flex-col p-4 bg-gray-900 animate-fadeIn">
+  <!-- Background Elements -->
+  <div class="absolute inset-0 bg-gradient-to-br from-gray-900 via-purple-900/40 to-yellow-900/30 z-0"></div>
+
+  @if(isInGuild() && guild(); as g) {
+    <div class="flex-grow flex flex-col md:flex-row gap-4 overflow-hidden">
+      <!-- Left Sidebar -->
+      <aside class="w-full md:w-64 flex-shrink-0 bg-black/30 p-3 rounded-xl border border-gray-700/50 flex flex-col">
+        <div class="text-center mb-4">
+            <h2 class="text-2xl font-orbitron text-yellow-300 truncate">{{ g.name }}</h2>
+            <p class="text-sm text-gray-400">Level {{ g.level }} Guild</p>
+        </div>
+        <nav class="flex flex-col gap-1.5 flex-grow">
+          <button (click)="activeTab.set('home')" class="w-full text-left px-3 py-2 text-sm rounded-md font-semibold flex items-center gap-2" [class.bg-purple-600/50]="activeTab() === 'home'" [class.hover:bg-gray-700]="activeTab() !== 'home'">Home</button>
+          <button (click)="activeTab.set('members')" class="w-full text-left px-3 py-2 text-sm rounded-md font-semibold flex items-center gap-2" [class.bg-purple-600/50]="activeTab() === 'members'" [class.hover:bg-gray-700]="activeTab() !== 'members'">Members ({{g.members.length}})</button>
+          <button (click)="activeTab.set('upgrades')" class="w-full text-left px-3 py-2 text-sm rounded-md font-semibold flex items-center gap-2" [class.bg-purple-600/50]="activeTab() === 'upgrades'" [class.hover:bg-gray-700]="activeTab() !== 'upgrades'">Upgrades</button>
+          <button (click)="activeTab.set('events')" class="w-full text-left px-3 py-2 text-sm rounded-md font-semibold flex items-center gap-2" [class.bg-purple-600/50]="activeTab() === 'events'" [class.hover:bg-gray-700]="activeTab() !== 'events'">Events</button>
+        </nav>
+        <button (click)="handleLeaveGuild()" class="w-full mt-4 py-2 bg-red-800/80 text-white font-bold rounded-md hover:bg-red-700 transition-colors">Leave Guild</button>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="flex-grow bg-black/30 p-4 rounded-xl border border-gray-700/50 overflow-y-auto">
+        @switch (activeTab()) {
+          @case('home') {
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-fadeIn">
+              <!-- Guild Status -->
+              <div class="bg-gray-800/50 p-4 rounded-lg">
+                <h3 class="text-xl font-orbitron text-gray-200 mb-2">Guild Status</h3>
+                <p class="font-semibold">Level {{ g.level }}</p>
+                <div class="w-full bg-gray-700 rounded-full h-5 my-1 border-2 border-purple-700 overflow-hidden">
+                  <div class="bg-purple-500 h-full rounded-full flex items-center justify-center text-xs font-bold" [style.width.%]="g.exp / expToNextLevel() * 100">
+                    {{ (g.exp / expToNextLevel() * 100).toFixed(0) }}%
+                  </div>
+                </div>
+                <p class="text-sm text-gray-400 text-center">{{ formatNumber(g.exp) }} / {{ formatNumber(expToNextLevel()) }} EXP</p>
+
+                @if(guildBonuses(); as bonuses) {
+                  <h4 class="text-lg font-semibold text-gray-300 mt-4">Active Bonuses</h4>
+                  <div class="space-y-1 mt-2 p-2 bg-black/30 rounded-md">
+                    @for(bonusText of getBonusText(bonuses); track bonusText) {
+                      <p class="text-green-400 font-semibold flex items-center gap-2"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> {{ bonusText }}</p>
+                    }
+                  </div>
+                }
+              </div>
+              <!-- Donate -->
+              <div class="bg-gray-800/50 p-4 rounded-lg flex flex-col justify-center">
+                <h3 class="text-xl font-orbitron text-gray-200 mb-2">Contribute to Guild</h3>
+                <p class="text-sm text-gray-400 mb-4">Donate Gold to earn Guild EXP and help your guild level up. (100 Gold = 1 EXP)</p>
+                <input type="number" [(ngModel)]="donationAmount" placeholder="Enter amount..." class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-center text-lg">
+                <div class="flex gap-2 justify-center mt-2">
+                    <button (click)="setDonationAmount(0.1)" class="text-xs px-2 py-1 bg-gray-600 rounded-md hover:bg-gray-500">10%</button>
+                    <button (click)="setDonationAmount(0.25)" class="text-xs px-2 py-1 bg-gray-600 rounded-md hover:bg-gray-500">25%</button>
+                    <button (click)="setDonationAmount(0.5)" class="text-xs px-2 py-1 bg-gray-600 rounded-md hover:bg-gray-500">50%</button>
+                    <button (click)="setDonationAmount(1)" class="text-xs px-2 py-1 bg-gray-600 rounded-md hover:bg-gray-500">MAX</button>
+                </div>
+                <button (click)="handleDonate()" [disabled]="!donationAmount() || donationAmount()! <= 0 || gameService().gameState().gold < donationAmount()!" class="mt-4 w-full py-2 bg-yellow-600 text-black font-bold rounded-md hover:bg-yellow-500 disabled:bg-gray-600 disabled:text-white">Donate</button>
+              </div>
+              <!-- Guild Log -->
+              <div class="lg:col-span-2 bg-gray-800/50 p-4 rounded-lg">
+                <h3 class="text-xl font-orbitron text-gray-200 mb-2">Guild Log</h3>
+                <div class="h-48 bg-black/40 rounded p-2 overflow-y-auto space-y-1.5 text-sm">
+                  @for(log of mockGuildLog(); track $index) {
+                    <p>
+                      <span class="font-semibold" [class.text-green-400]="log.type === 'join'" [class.text-yellow-400]="log.type === 'donation'" [class.text-purple-400]="log.type === 'achievement'" [class.text-cyan-400]="log.type === 'system'">{{ log.player }}</span>
+                      <span class="text-gray-300"> {{ log.message }}</span>
+                    </p>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+          @case('members') {
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 animate-fadeIn">
+              @for(member of g.members; track member.name) {
+                <div class="bg-gray-800/50 p-3 rounded-lg border-l-4" [class.border-yellow-400]="member.title === 'Guild Master'" [class.border-purple-400]="member.title === 'Officer'" [class.border-gray-500]="member.title === 'Member'">
+                  <p class="font-bold text-lg text-white truncate">{{member.name}}</p>
+                  <p class="text-sm font-semibold" [class.text-yellow-400]="member.title === 'Guild Master'" [class.text-purple-400]="member.title === 'Officer'" [class.text-gray-400]="member.title === 'Member'">{{member.title}}</p>
+                  <p class="text-gray-300 mt-2">Highest Stage: {{ formatNumber(member.stage) }}</p>
+                </div>
+              }
+            </div>
+          }
+          @case('upgrades') {
+            <div class="animate-fadeIn space-y-2">
+              @for(levelInfo of allGuildBonuses(); track levelInfo.level) {
+                <div class="flex items-center p-3 rounded-lg" [class.bg-purple-900/50]="levelInfo.level === g.level" [class.bg-gray-800/40]="levelInfo.level !== g.level" [class.opacity-50]="levelInfo.level > g.level">
+                  <div class="w-20 font-orbitron text-lg font-bold" [class.text-yellow-300]="levelInfo.level === g.level" [class.text-white]="levelInfo.level < g.level" [class.text-gray-400]="levelInfo.level > g.level">
+                    Level {{levelInfo.level}}
+                  </div>
+                  <div class="flex gap-x-6 gap-y-1 flex-wrap">
+                    @for(bonusText of getBonusText(levelInfo.bonuses); track bonusText) {
+                      <span class="font-semibold" [class.text-green-400]="levelInfo.level <= g.level" [class.text-gray-500]="levelInfo.level > g.level">{{ bonusText }}</span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+          @case('events') {
+            <div class="animate-fadeIn text-center flex flex-col items-center justify-center h-full">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <h2 class="text-2xl font-orbitron text-gray-500">Coming Soon: Guild Events</h2>
+              <p class="text-gray-400 mt-2 max-w-md">Team up with your guildmates to take down powerful Guild Bosses and participate in competitive Guild Wars for exclusive rewards!</p>
+            </div>
+          }
+        }
+      </main>
+    </div>
+  } @else {
+    <!-- No Guild View -->
+    <main class="flex-grow grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto animate-fadeIn w-full">
+      <!-- Create Guild -->
+      <div class="bg-black/30 p-6 rounded-xl border border-gray-700/50 flex flex-col items-center">
+          <h2 class="text-2xl font-orbitron text-green-400 mb-4">Create Your Own Guild</h2>
+          <input [(ngModel)]="createGuildName" type="text" placeholder="Guild Name" maxlength="20" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-center mb-4">
+          <button (click)="handleCreateGuild()" [disabled]="!createGuildName().trim() || gameService().gameState().gold < GUILD_CREATE_COST" class="w-full py-3 bg-green-600 text-white font-bold rounded-md hover:bg-green-700 disabled:bg-gray-600">
+            Create (💰 {{ formatNumber(GUILD_CREATE_COST) }})
+          </button>
+      </div>
+
+      <!-- Join Guild -->
+      <div class="bg-black/30 p-4 rounded-xl border border-gray-700/50 flex flex-col">
+          <h2 class="text-2xl font-orbitron text-blue-400 mb-4 text-center">Join a Guild</h2>
+          <div class="space-y-2 overflow-y-auto">
+            @for(guild of browseableGuilds; track guild.id) {
+              <div class="bg-gray-800/50 p-3 rounded-lg flex justify-between items-center">
+                <div>
+                  <p class="font-semibold text-white">{{ guild.name }}</p>
+                  <p class="text-sm text-gray-400">Level {{ guild.level }} | {{ guild.members }}/{{ guild.maxMembers }} Members</p>
+                </div>
+                <button (click)="handleJoinGuild(guild.id, guild.name)" class="px-4 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 transition-colors">Join</button>
+              </div>
+            }
+          </div>
+      </div>
+    </main>
+  }
+</div>

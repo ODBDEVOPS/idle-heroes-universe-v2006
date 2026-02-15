@@ -1,0 +1,58 @@
+<div class="h-full w-full bg-gray-800 p-4 flex flex-col animate-fadeIn">
+  <header class="text-center mb-4">
+    <h1 class="text-3xl font-orbitron text-yellow-400">Ancient Artifacts</h1>
+    <p class="text-gray-400">Permanently enhance your power by collecting these timeless relics.</p>
+    <div class="mt-2 text-lg font-semibold text-yellow-200 bg-gray-900/50 rounded-full px-4 py-1 inline-block border border-yellow-500/50">
+      Unlocked: <span class="font-orbitron">{{ unlockedCount() }} / {{ totalCount }}</span>
+    </div>
+  </header>
+  
+  <div class="flex-grow overflow-y-auto pr-2 -mr-2">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
+      @for (artifact of artifactsWithStatus(); track artifact.id) {
+        <div 
+          class="bg-gray-900/50 rounded-lg p-4 border-l-4 transition-all duration-300"
+          [class.border-yellow-500]="artifact.unlocked"
+          [class.border-gray-700]="!artifact.unlocked"
+          [class.opacity-50]="!artifact.unlocked"
+        >
+          <div class="flex items-center gap-4 mb-3">
+            <div 
+              class="w-16 h-16 rounded-md flex-shrink-0 flex items-center justify-center border-2"
+              [class.bg-gray-800]="!artifact.unlocked"
+              [class.border-gray-600]="!artifact.unlocked"
+              [class.bg-yellow-900/50]="artifact.unlocked"
+              [class.border-yellow-400]="artifact.unlocked"
+            >
+              <svg 
+                class="h-10 w-10"
+                [class.text-yellow-400]="artifact.unlocked"
+                [class.text-gray-600]="!artifact.unlocked"
+                fill="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path [attr.d]="getArtifactIcon(artifact.id)"></path>
+              </svg>
+            </div>
+            <div class="flex-grow">
+              <h2 class="font-bold text-lg" [class.text-white]="artifact.unlocked" [class.text-gray-500]="!artifact.unlocked">{{ artifact.name }}</h2>
+              <p class="text-lg font-semibold" [class.text-green-400]="artifact.unlocked" [class.text-gray-400]="!artifact.unlocked">
+                {{ formatBonus(artifact) }}
+              </p>
+            </div>
+          </div>
+          <div class="pt-3 border-t border-gray-700/50">
+            <p class="text-sm italic" [class.text-gray-400]="artifact.unlocked" [class.text-gray-500]="!artifact.unlocked">
+              {{ artifact.description }}
+            </p>
+            @if (!artifact.unlocked) {
+              <p class="text-sm font-semibold text-red-400 mt-2">
+                <span class="font-bold">How to unlock:</span> {{ artifact.unlockHint }}
+              </p>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

@@ -1,0 +1,105 @@
+<div class="h-full w-full bg-gray-900 flex flex-col animate-fadeIn overflow-hidden relative p-4">
+  <!-- BG -->
+  <div class="absolute inset-0 bg-gradient-to-br from-gray-900 via-yellow-900/40 to-purple-900/30 z-0"></div>
+
+  <header class="relative z-10 text-center mb-4 flex justify-between items-center">
+    <button (click)="viewChange.emit('base')" class="bg-gray-700/50 hover:bg-gray-600/50 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+        Base Command
+    </button>
+    <div class="flex-grow">
+      <h1 class="text-3xl font-orbitron text-yellow-300">Cosmic Emporium</h1>
+      <p class="text-gray-400">Your one-stop shop for universal goods.</p>
+    </div>
+    <div class="w-48"></div>
+  </header>
+  
+  <!-- Tabs -->
+  <div class="relative z-10 mb-4 flex space-x-1 sm:space-x-2 border-b-2 border-gray-700">
+    <button (click)="activeTab.set('featured')" class="px-4 py-2 text-base font-orbitron transition-all flex-grow" [class.text-yellow-300]="activeTab() === 'featured'" [class.border-b-2]="activeTab() === 'featured'" [class.border-yellow-300]="activeTab() === 'featured'" [class.text-gray-400]="activeTab() !== 'featured'">Featured</button>
+    <button (click)="activeTab.set('fragments')" class="px-4 py-2 text-base font-orbitron transition-all flex-grow" [class.text-yellow-300]="activeTab() === 'fragments'" [class.border-b-2]="activeTab() === 'fragments'" [class.border-yellow-300]="activeTab() === 'fragments'" [class.text-gray-400]="activeTab() !== 'fragments'">Hero Fragments</button>
+    <button (click)="activeTab.set('resources')" class="px-4 py-2 text-base font-orbitron transition-all flex-grow" [class.text-yellow-300]="activeTab() === 'resources'" [class.border-b-2]="activeTab() === 'resources'" [class.border-yellow-300]="activeTab() === 'resources'" [class.text-gray-400]="activeTab() !== 'resources'">Resources</button>
+  </div>
+  
+  <main class="relative z-10 flex-grow overflow-y-auto pr-2">
+    @switch (activeTab()) {
+      @case('featured') {
+        <div class="animate-fadeIn max-w-2xl mx-auto">
+          <div class="bg-gradient-to-r from-purple-500 via-red-500 to-yellow-500 p-1 rounded-xl shadow-lg">
+            <div class="bg-gray-800 p-6 rounded-lg text-center">
+              <h3 class="text-2xl font-orbitron text-yellow-300">Starter's Boon</h3>
+              <p class="text-gray-400 my-2">A special one-time offer to kickstart your journey!</p>
+              <div class="my-4 p-4 bg-black/30 rounded-lg space-y-2">
+                <p class="text-lg font-semibold text-white">Contains:</p>
+                <p>💰 500,000 Gold</p>
+                <p class="text-cyan-300">💎 100 Prestige Points</p>
+                <p class="text-purple-300">1x Epic Equipment Cache</p>
+              </div>
+              <button disabled class="w-full py-3 bg-gray-600 text-white font-bold rounded-md cursor-not-allowed">
+                Coming Soon!
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+      @case('fragments') {
+        <div class="animate-fadeIn">
+          <div class="mb-4 text-center bg-black/30 p-2 rounded-lg">
+            <p class="text-lg">Your Hero Essence: <span class="font-bold text-cyan-300">💠 {{ formatNumber(gameService().gameState().heroEssence) }}</span></p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            @for(item of unlockedHeroesForShop(); track item.id) {
+              <div class="bg-gray-800/50 p-3 rounded-lg flex items-center justify-between border-l-4" [class]="getRarityBorderClass(item.rarity)">
+                <div class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center border-2 text-lg font-bold" [class]="getRarityBorderClass(item.rarity)">{{ getHeroInitials(item.name) }}</div>
+                  <div>
+                    <p class="font-bold text-white text-sm">{{ item.name }}</p>
+                    <p class="text-xs text-gray-400">Shards: {{ gameService().gameState().heroShards[item.id] || 0 }}</p>
+                  </div>
+                </div>
+                <button (click)="purchaseHeroShards(item.id)" [disabled]="gameService().gameState().heroEssence < item.shardCost" class="px-3 py-2 bg-purple-600 text-white font-bold rounded-md hover:bg-purple-700 transition-colors disabled:bg-gray-600 text-sm flex flex-col items-center">
+                  <span>Buy Shard</span>
+                  <span class="text-xs text-purple-200">💠 {{ item.shardCost }}</span>
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+      @case('resources') {
+         <div class="animate-fadeIn max-w-2xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-gray-800/50 p-4 rounded-lg text-center flex flex-col">
+            <h3 class="text-xl font-orbitron text-white">Pouch of Gold</h3>
+            <p class="text-4xl my-4">💰</p>
+            <p class="text-lg font-semibold text-yellow-300 flex-grow">100,000 Gold</p>
+            <button (click)="purchaseResource('gold')" [disabled]="gameService().gameState().prestigePoints < 10" class="mt-4 w-full py-2 bg-yellow-600 text-black font-bold rounded-md hover:bg-yellow-700 disabled:bg-gray-600 disabled:text-white">
+              Buy (💎 10)
+            </button>
+          </div>
+          <div class="bg-gray-800/50 p-4 rounded-lg text-center flex flex-col">
+            <h3 class="text-xl font-orbitron text-white">Pile of Dust</h3>
+            <p class="text-4xl my-4">💧</p>
+            <p class="text-lg font-semibold shimmer-text-purple flex-grow">100 Enchanting Dust</p>
+            <button (click)="purchaseResource('dust')" [disabled]="gameService().gameState().prestigePoints < 25" class="mt-4 w-full py-2 bg-purple-600 text-white font-bold rounded-md hover:bg-purple-700 disabled:bg-gray-600">
+              Buy (💎 25)
+            </button>
+          </div>
+          <div class="bg-gray-800/50 p-4 rounded-lg text-center flex flex-col md:col-span-2">
+            <h3 class="text-xl font-orbitron text-white">Stack of Tomes</h3>
+            <p class="text-4xl my-4">📚</p>
+            <p class="text-lg font-semibold text-orange-300 flex-grow">10 Tomes of Skill</p>
+            <button (click)="purchaseResource('tomes')" [disabled]="gameService().gameState().prestigePoints < 50" class="mt-4 w-full py-2 bg-orange-600 text-white font-bold rounded-md hover:bg-orange-700 disabled:bg-gray-600">
+              Buy (💎 50)
+            </button>
+          </div>
+        </div>
+      }
+    }
+  </main>
+  
+  @if(purchaseNotice(); as message) {
+    <div class="absolute bottom-4 right-4 z-50 bg-green-600 text-white font-bold px-4 py-2 rounded-lg shadow-lg animate-drop-notification">
+        {{ message }}
+    </div>
+  }
+</div>
