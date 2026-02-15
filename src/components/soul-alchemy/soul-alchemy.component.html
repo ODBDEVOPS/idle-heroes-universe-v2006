@@ -1,0 +1,106 @@
+<div class="h-full w-full bg-gray-900 flex flex-col animate-fadeIn overflow-hidden relative p-4">
+  <!-- BG -->
+  <div class="absolute inset-0 bg-gradient-to-br from-indigo-900/60 via-black to-purple-900/50 z-0"></div>
+  
+  <header class="text-center mb-4 z-10 flex justify-between items-center">
+    <button (click)="viewChange.emit('professions')" class="bg-gray-700/50 hover:bg-gray-600/50 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+        Professions
+    </button>
+    <div class="flex-grow">
+      <h1 class="text-3xl font-orbitron text-purple-300">Soul Alchemy</h1>
+      <p class="text-gray-400">Fuse elemental souls to create powerful entities.</p>
+    </div>
+    <div class="w-48"></div>
+  </header>
+
+  <div class="relative z-10 flex-grow grid grid-cols-1 lg:grid-cols-5 gap-4 overflow-hidden">
+    <!-- Left: Elemental Souls -->
+    <div class="lg:col-span-1 bg-black/30 p-2 rounded-xl border border-gray-700/50 flex flex-col">
+        <h2 class="text-lg font-orbitron text-gray-300 text-center mb-2 flex-shrink-0">Your Souls</h2>
+        <div class="flex-grow overflow-y-auto space-y-2 pr-1">
+            @for(soul of elementalSouls(); track soul.id) {
+                <div (click)="addToFusion(soul)" class="p-2 w-full rounded-lg flex items-center gap-3 text-left transition-colors duration-200 cursor-pointer hover:bg-gray-700/60 bg-gray-900/50 border-l-4" [class]="getRarityBorderClass(soul.rarity)">
+                    <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center border-2 text-2xl" [class]="getRarityBorderClass(soul.rarity)">
+                      @switch(soul.id) {
+                        @case('soul_fire') { 🔥 }
+                        @case('soul_water') { 💧 }
+                        @case('soul_earth') { 🌍 }
+                        @case('soul_air') { 💨 }
+                      }
+                    </div>
+                    <div>
+                        <p class="font-bold text-white leading-tight">{{ soul.name }}</p>
+                        <p class="text-sm text-gray-400">Owned: {{ soul.count }}</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+    
+    <!-- Center: Fusion Altar -->
+    <div class="lg:col-span-3 bg-black/30 p-6 rounded-xl border border-gray-700/50 flex flex-col items-center justify-center">
+        <h2 class="text-2xl font-orbitron text-purple-300 mb-6">Fusion Altar</h2>
+
+        <div class="grid grid-cols-5 items-center gap-4 w-full max-w-lg">
+            <!-- Slot 1 -->
+            <div (click)="removeFromFusion(0)" class="aspect-square bg-gray-800/50 rounded-full flex flex-col items-center justify-center border-2 border-dashed border-gray-600 cursor-pointer" [class.border-solid]="fusionSlots()[0]" [class]="fusionSlots()[0] ? getRarityBorderClass(fusionSlots()[0]!.rarity) : ''">
+                @if(fusionSlots()[0]; as soul) {
+                    <div class="text-4xl">
+                      @switch(soul.id) { @case('soul_fire') { 🔥 } @case('soul_water') { 💧 } @case('soul_earth') { 🌍 } @case('soul_air') { 💨 } }
+                    </div>
+                    <p class="text-xs text-center">{{soul.name}}</p>
+                } @else { <span class="text-3xl text-gray-600">+</span> }
+            </div>
+            <div class="text-3xl text-center text-gray-500">+</div>
+            <!-- Slot 2 -->
+             <div (click)="removeFromFusion(1)" class="aspect-square bg-gray-800/50 rounded-full flex flex-col items-center justify-center border-2 border-dashed border-gray-600 cursor-pointer" [class.border-solid]="fusionSlots()[1]" [class]="fusionSlots()[1] ? getRarityBorderClass(fusionSlots()[1]!.rarity) : ''">
+                @if(fusionSlots()[1]; as soul) {
+                    <div class="text-4xl">
+                      @switch(soul.id) { @case('soul_fire') { 🔥 } @case('soul_water') { 💧 } @case('soul_earth') { 🌍 } @case('soul_air') { 💨 } }
+                    </div>
+                    <p class="text-xs text-center">{{soul.name}}</p>
+                } @else { <span class="text-3xl text-gray-600">+</span> }
+            </div>
+            <div class="text-3xl text-center text-purple-400">=</div>
+            <!-- Result -->
+            <div class="aspect-square bg-gray-900/50 rounded-full flex flex-col items-center justify-center border-2 border-gray-700" [class]="fusionResult() ? getRarityBorderClass(fusionResult()!.rarity) : ''">
+                 @if(fusionResult(); as result) {
+                    <div class="text-4xl">
+                       @switch(result.id) { @case('magma_soul') { '🌋' } @case('storm_soul') { '⛈️' } @case('lightning_soul') { '⚡' } @case('geode_soul') { '💎' } }
+                    </div>
+                    <p class="text-xs text-center">{{result.name}}</p>
+                 } @else { <span class="text-3xl text-gray-600">?</span> }
+            </div>
+        </div>
+
+        <button (click)="executeFusion()" [disabled]="!canFuse() || isFusing()" class="w-full max-w-xs mt-8 py-3 bg-purple-600 text-white font-bold text-lg rounded-md hover:bg-purple-700 transition-all disabled:bg-gray-600 disabled:cursor-not-allowed">
+          @if(isFusing()) { <span>Fusing...</span> } @else { <span>Fuse Souls</span> }
+        </button>
+    </div>
+
+    <!-- Right: Sanctuary -->
+    <div class="lg:col-span-1 bg-black/30 p-2 rounded-xl border border-gray-700/50 flex flex-col">
+        <h2 class="text-lg font-orbitron text-gray-300 text-center mb-2 flex-shrink-0">Soul Sanctuary</h2>
+        <div class="flex-grow overflow-y-auto space-y-2 pr-1">
+            @for(soul of discoveredSouls(); track soul.id) {
+                <div class="p-2 w-full rounded-lg flex items-center gap-3 bg-gray-900/50 border-l-4" [class]="getRarityBorderClass(soul.rarity)">
+                    <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center border-2 text-2xl" [class]="getRarityBorderClass(soul.rarity)">
+                      @switch(soul.id) {
+                        @case('magma_soul') { '🌋' }
+                        @case('storm_soul') { '⛈️' }
+                        @case('lightning_soul') { '⚡' }
+                        @case('geode_soul') { '💎' }
+                      }
+                    </div>
+                    <div>
+                        <p class="font-bold text-white leading-tight">{{ soul.name }}</p>
+                        <p class="text-sm text-green-400">{{ getResonanceBonus(soul.id) }}</p>
+                    </div>
+                </div>
+            } @empty {
+                <p class="text-center text-gray-500 italic py-8 text-sm">No hybrid souls discovered yet. Fuse elemental souls to create them.</p>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,106 @@
+<div class="h-full w-full relative overflow-hidden flex flex-col p-4 bg-gray-900 animate-fadeIn">
+  <!-- Thematic Background -->
+  <div class="absolute inset-0 bg-gradient-to-br from-gray-900 via-indigo-900/40 to-black z-0"></div>
+  <div class="absolute inset-0 z-0 pointer-events-none animate-bg-float" style="animation-duration: 120s;">
+    <div class="star-particle bg-purple-400/50" style="top: 10%; left: 15%; animation-delay: 0s;"></div>
+    <div class="star-particle bg-indigo-400/50" style="top: 85%; left: 90%; animation-delay: 1.5s;"></div>
+    <div class="star-particle bg-purple-300/50" style="top: 50%; left: 50%; animation-delay: 3s; width: 3px; height: 3px;"></div>
+  </div>
+  
+  <header class="relative z-10 text-center mb-4">
+    <button (click)="backToProfessions()" class="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-700/50 hover:bg-gray-600/50 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+      Back
+    </button>
+    <h1 class="text-4xl font-orbitron text-indigo-300 drop-shadow-lg">Nécro-Artisanat</h1>
+  </header>
+
+  <main class="relative z-10 flex-grow grid grid-cols-1 lg:grid-cols-5 gap-4 overflow-hidden">
+    <!-- Left: Crafting Blueprints -->
+    <div class="lg:col-span-3 bg-black/30 p-2 rounded-xl border border-gray-700/50 flex flex-col">
+        <h2 class="text-lg font-orbitron text-gray-300 text-center mb-2 flex-shrink-0">Crafting Blueprints</h2>
+        <div class="flex-grow overflow-y-auto space-y-2 pr-1">
+          @for(recipe of allRecipes(); track recipe.construct.id) {
+            <div class="bg-gray-900/50 p-3 rounded-lg flex flex-col sm:flex-row gap-4">
+                <div class="flex-grow">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="text-3xl">{{ recipe.construct.icon }}</div>
+                        <div>
+                            <h3 class="font-bold text-lg text-white">{{ recipe.construct.name }}</h3>
+                            <p class="text-sm text-green-400 font-semibold">{{ recipe.construct.description }}</p>
+                        </div>
+                    </div>
+                    <div class="bg-black/20 p-2 rounded-md">
+                        <p class="text-xs text-gray-400 font-semibold mb-1">Required Materials:</p>
+                        <div class="flex flex-wrap gap-x-3 gap-y-1 text-sm">
+                            @for(mat of recipe.materials; track mat.id) {
+                                <p [class]="mat.owned >= mat.required ? 'text-gray-300' : 'text-red-400'">
+                                    {{ mat.name }}: {{ mat.owned }}/{{ mat.required }}
+                                </p>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <button (click)="craft(recipe.construct.id)" [disabled]="!recipe.canCraft || isCrafting()" class="flex-shrink-0 px-5 py-2 bg-indigo-600 text-white font-bold rounded-md hover:bg-indigo-700 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    @if(isCrafting()) {
+                        <svg class="animate-spin -ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span>Crafting...</span>
+                    } @else {
+                        <span>Craft</span>
+                    }
+                </button>
+            </div>
+          }
+        </div>
+    </div>
+    
+    <!-- Right: Altar & Constructs -->
+    <div class="lg:col-span-2 bg-black/30 p-4 rounded-xl border border-gray-700/50 flex flex-col">
+        <h2 class="text-lg font-orbitron text-gray-300 text-center mb-2 flex-shrink-0">Altar of Binding</h2>
+        <div class="h-48 flex-grow flex items-center justify-center bg-gray-900/50 rounded-lg relative">
+            <!-- Altar Visuals -->
+            <div class="absolute w-40 h-40 rounded-full bg-indigo-900/50 border-2 border-indigo-600" [class.animate-pulse-glow-cyan]="isCrafting()"></div>
+            <div class="absolute w-32 h-32 rounded-full bg-black border-2 border-indigo-700"></div>
+            <div class="absolute w-24 h-24 rounded-full bg-gradient-radial from-indigo-500/30 to-transparent"></div>
+             
+             @if(craftSuccess(); as item) {
+                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none animate-level-up-fade-out">
+                    <div class="text-4xl">{{ item.icon }}</div>
+                    <p class="text-sm font-bold text-green-300">Success!</p>
+                    <h3 class="font-semibold text-lg text-white">Crafted {{ item.name }}</h3>
+                </div>
+            }
+        </div>
+        <h2 class="text-lg font-orbitron text-gray-300 text-center my-2 flex-shrink-0">Owned Constructs</h2>
+        
+        <!-- Total Bonuses -->
+        @if(totalBonuses().length > 0) {
+          <div class="bg-gray-800 p-2 rounded-lg mb-2 text-center flex-shrink-0">
+            <p class="text-xs font-bold text-gray-400 uppercase">Total Bonuses</p>
+            <div class="flex justify-center gap-x-3 gap-y-1 text-sm font-semibold flex-wrap">
+              @for(bonus of totalBonuses(); track bonus.type) {
+                <p class="text-green-400">{{ bonus.text }}</p>
+              }
+            </div>
+          </div>
+        }
+
+        <div class="flex-grow overflow-y-auto space-y-2 pr-1 w-full">
+            @for(construct of ownedConstructs(); track construct.id) {
+                <div class="bg-gray-800 p-2 rounded-lg flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <span class="text-2xl">{{ construct.icon }}</span>
+                      <div>
+                        <p class="font-semibold text-white">{{ construct.name }}</p>
+                        <p class="text-xs text-green-400 font-semibold">{{ construct.description }}</p>
+                      </div>
+                    </div>
+                    <p class="font-bold text-lg text-indigo-300">x{{ construct.count }}</p>
+                </div>
+            } @empty {
+                <p class="text-center text-gray-500 italic py-4">You have not crafted any constructs.</p>
+            }
+        </div>
+    </div>
+  </main>
+</div>

@@ -1,0 +1,185 @@
+<div class="h-full w-full bg-gray-800 p-4 flex flex-col animate-fadeIn">
+  <header class="text-center mb-4">
+    <h1 class="text-3xl font-orbitron text-green-400">Inventory</h1>
+    <p class="text-gray-400">All your collected equipment in one place.</p>
+  </header>
+
+  <!-- Filtering and Sorting controls -->
+  <div class="bg-gray-900/50 p-2 rounded-lg mb-4 flex flex-col md:flex-row gap-2 items-center justify-between">
+    <!-- Search Input -->
+    <div class="relative w-full md:w-auto md:flex-grow">
+      <input 
+        type="text" 
+        placeholder="Search items..." 
+        [value]="searchTerm()"
+        (input)="onSearchChange($event)"
+        class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-green-500 focus:border-green-500 p-2 pl-8"
+      >
+      <svg class="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+      </svg>
+    </div>
+    <!-- Rarity Filters -->
+    <div class="flex items-center gap-1 flex-wrap justify-center bg-gray-700/50 p-1 rounded-lg">
+      @for (rarity of rarities; track rarity) {
+        <button
+          (click)="setRarityFilter(rarity)"
+          class="px-3 py-1 text-xs font-bold rounded-md transition-all duration-200 transform hover:scale-105 active:scale-95"
+          [class.bg-green-600]="activeRarityFilter() === rarity"
+          [class.text-white]="activeRarityFilter() === rarity"
+          [class.hover:bg-gray-600]="activeRarityFilter() !== rarity"
+          [class.text-gray-300]="activeRarityFilter() !== rarity">
+          {{ rarity }}
+        </button>
+      }
+    </div>
+    <!-- Sort Dropdown -->
+    <div class="flex items-center gap-2 shrink-0">
+      <label for="sort-select" class="text-gray-400 font-semibold text-sm">Sort by:</label>
+      <select
+        id="sort-select"
+        (change)="onSortChange($event)"
+        class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-green-500 focus:border-green-500 p-1.5">
+        <option value="rarity" [selected]="activeSort() === 'rarity'">Rarity</option>
+        <option value="name" [selected]="activeSort() === 'name'">Name</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Inventory Grid -->
+  <div class="flex-grow overflow-y-auto pr-2 -mr-2">
+    @if (gameService().inventory().length > 0) {
+      @for(slot of slots; track slot) {
+        <div class="mb-6">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-lg bg-black/30 flex items-center justify-center border border-green-500/30">
+                  <svg class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" [attr.d]="getSlotIcon(slot)"></path></svg>
+              </div>
+              <h2 class="text-2xl font-orbitron text-gray-200">{{ slot }}s</h2>
+              <div class="flex-grow h-px bg-green-500/30"></div>
+            </div>
+
+            @if(filteredAndSortedInventory()[slot].length > 0) {
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @for(item of filteredAndSortedInventory()[slot]; track item.id) {
+                        @let equippedBy = getEquippedBy(item.id);
+                        <div (click)="openDetailModal(item)" class="bg-slate-900/70 backdrop-blur-sm rounded-xl border flex flex-col p-3 transition-all duration-300 relative group overflow-hidden cursor-pointer hover:border-green-400" 
+                             [class]="getRarityBorderClass(item.rarity)"
+                             [appTooltip]="getEquipmentTooltip(item)">
+                            
+                            @if(equippedBy) {
+                              <div class="absolute inset-0 bg-purple-900/50 z-10 flex flex-col items-center justify-center p-2 text-center pointer-events-none rounded-lg opacity-80 group-hover:opacity-100 transition-opacity">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-300" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>
+                                <p class="font-bold text-sm text-purple-200 mt-1">Equipped by</p>
+                                <p class="font-semibold text-white truncate w-full">{{ equippedBy }}</p>
+                              </div>
+                            }
+
+                            <div class="flex-grow" [class.opacity-50]="equippedBy">
+                              <div class="flex justify-between items-start">
+                                <p class="font-bold text-base leading-tight pr-4" [class]="getRarityTextColor(item.rarity)">{{ item.name }}</p>
+                                @if(item.enchantLevel > 0) {
+                                  <span class="text-yellow-400 font-bold bg-black/50 px-1.5 rounded-md text-sm">+{{ item.enchantLevel }}</span>
+                                }
+                              </div>
+                              <div class="flex items-center gap-2 mt-2 text-green-400">
+                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" [attr.d]="getBonusIconPath(item.bonusType)" clip-rule="evenodd" /></svg>
+                                <p class="text-sm font-semibold">{{ formatBonus(item) }}</p>
+                              </div>
+                            </div>
+                            <div class="mt-2 pt-2 border-t border-slate-700/50 text-right" [class.opacity-50]="equippedBy">
+                              <p class="text-xs font-semibold" [class]="getRarityTextColor(item.rarity)">{{ item.rarity }} {{item.slot}}</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            } @else {
+                 <div class="bg-black/20 p-3 rounded-lg">
+                    <p class="text-gray-500 italic text-center py-4">No {{ slot.toLowerCase() }}s match the current filters.</p>
+                 </div>
+            }
+        </div>
+      }
+    } @else {
+      <div class="text-center py-10 flex flex-col items-center justify-center h-full">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+        </svg>
+        <p class="text-gray-500 italic text-lg">Your inventory is empty.</p>
+        <p class="text-gray-400 mt-2">Defeat enemies and complete expeditions to find equipment!</p>
+      </div>
+    }
+  </div>
+
+  <!-- Item Detail Modal -->
+  @if(isDetailModalOpen() && selectedItem(); as item) {
+    <div class="absolute inset-0 bg-black/70 flex items-center justify-center z-50 backdrop-blur-sm" (click)="closeDetailModal()">
+      <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl border-2 animate-modal-fade-in flex flex-col max-h-[90vh]" [class]="getRarityBorderClass(item.rarity)" (click)="$event.stopPropagation()">
+        <header class="p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
+          <h2 class="text-2xl font-orbitron" [class]="getRarityTextColor(item.rarity)">{{ item.name }}</h2>
+          <button (click)="closeDetailModal()" class="text-gray-400 hover:text-white text-3xl leading-none">&times;</button>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 overflow-y-auto">
+          <!-- Left: Visual & Stats -->
+          <div class="flex flex-col items-center text-center gap-4 bg-gray-900/50 p-4 rounded-lg">
+            <div class="w-32 h-32 rounded-lg flex flex-col items-center justify-center border-4" [class]="getRarityBorderClass(item.rarity)">
+              <svg class="h-16 w-16" [class]="getRarityTextColor(item.rarity)" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" [attr.d]="getSlotIcon(item.slot)"></path></svg>
+            </div>
+            <div class="w-full">
+              <p class="font-semibold text-2xl" [class]="getRarityTextColor(item.rarity)">
+                {{ item.rarity }} {{ item.slot }}
+                @if(item.enchantLevel > 0) {
+                  <span class="text-yellow-400">+{{ item.enchantLevel }}</span>
+                }
+              </p>
+              <div class="my-2 h-px bg-gray-700"></div>
+              <div class="flex items-center justify-center gap-2 text-green-400 text-2xl font-semibold">
+                <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" [attr.d]="getBonusIconPath(item.bonusType)" clip-rule="evenodd" /></svg>
+                <span>{{ formatBonus(item) }}</span>
+              </div>
+              <div class="my-2 h-px bg-gray-700"></div>
+              <p class="text-sm text-gray-400 italic">"{{ item.lore }}"</p>
+            </div>
+          </div>
+          <!-- Right: Actions & Equippable Heroes -->
+          <div class="flex flex-col gap-4">
+            @if(isEquipped(item.id); as isEquipped) {
+              <div class="bg-gray-900/50 p-4 rounded-lg">
+                <h3 class="font-semibold text-lg text-purple-300">Equipped By</h3>
+                <p class="text-xl text-white">{{ getEquippedBy(item.id) }}</p>
+              </div>
+              <button (click)="unequipItem()" class="w-full py-2 bg-yellow-600 text-black font-bold rounded-md hover:bg-yellow-500">Unequip</button>
+            } @else {
+              <div class="bg-gray-900/50 p-2 rounded-lg flex-grow flex flex-col">
+                <h3 class="font-semibold text-lg text-green-300 text-center mb-2">Equip to a Hero</h3>
+                <div class="flex-grow overflow-y-auto space-y-1 pr-1">
+                  @for(hero of heroesWhoCanEquip(); track hero.id) {
+                    <button (click)="equipItem(hero.id)" class="w-full text-left p-2 rounded-md bg-gray-700 hover:bg-green-700/50 flex items-center justify-between">
+                      <span>{{ hero.name }} <span class="text-gray-400">(Lvl {{ hero.level }})</span></span>
+                      <span class="text-xs font-bold">EQUIP</span>
+                    </button>
+                  } @empty {
+                    <p class="text-center text-gray-500 italic py-4">No available heroes can equip this.</p>
+                  }
+                </div>
+              </div>
+            }
+
+            <div class="grid grid-cols-2 gap-4">
+              <button (click)="goToEnchant()" class="py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700">Enchant</button>
+              @if(!isConfirmingSalvage()) {
+                <button (click)="isConfirmingSalvage.set(true)" class="py-2 bg-red-800 text-white font-bold rounded-md hover:bg-red-700">Salvage</button>
+              } @else {
+                <div class="flex gap-2">
+                    <button (click)="salvageItem()" class="w-full py-2 bg-red-600 text-white font-bold rounded-md hover:bg-red-500">Confirm</button>
+                    <button (click)="isConfirmingSalvage.set(false)" class="w-full py-2 bg-gray-600 text-white font-bold rounded-md hover:bg-gray-500">Cancel</button>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

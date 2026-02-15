@@ -1,0 +1,152 @@
+<div class="h-full w-full bg-gray-900 animate-fadeIn overflow-hidden" (click)="closeContextMenu()">
+  @switch (internalView()) {
+    @case ('team') {
+      <div class="h-full w-full flex flex-col gap-4 p-4 overflow-y-auto">
+        <!-- Header -->
+        <header class="text-center">
+          <h1 class="text-3xl font-orbitron text-purple-400">Team Hub</h1>
+          <p class="text-gray-400">Assemble your squad and manage presets.</p>
+        </header>
+
+        <!-- Active Synergies -->
+        <div class="bg-black/30 p-3 rounded-xl border border-purple-500/30">
+            <h2 class="text-lg font-orbitron text-gray-300 mb-2">Active Synergies</h2>
+            @if(gameService().activeSynergies().length > 0) {
+                <div class="flex flex-wrap gap-2">
+                    @for(synergy of gameService().activeSynergies(); track synergy.role) {
+                        <div class="bg-green-900/50 text-green-300 text-xs font-semibold px-2 py-1 rounded-full border border-green-700">{{ synergy.description }}</div>
+                    }
+                </div>
+            } @else {
+                <p class="text-xs text-gray-500 italic">No active synergies. Field more heroes of the same role.</p>
+            }
+        </div>
+
+        <!-- Active Team Grid -->
+        <div class="bg-black/30 p-3 rounded-xl border border-purple-500/30">
+          <div class="flex justify-between items-center mb-2">
+            <h2 class="text-lg font-orbitron text-gray-300">Active Team</h2>
+            <button (click)="viewChange.emit('team')" class="px-3 py-1 bg-purple-600 text-white text-sm font-bold rounded-md hover:bg-purple-700 transition-colors flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg>
+              <span>Full Roster</span>
+            </button>
+          </div>
+          @if(placementMode(); as mode) {
+            @if(mode.type === 'swap') {
+                <div class="bg-blue-900/50 border border-blue-500 p-2 rounded-lg text-center mb-2 flex justify-between items-center">
+                <span class="text-blue-300 font-semibold animate-pulse text-sm">
+                    Select another hero on your team to swap with.
+                </span>
+                <button (click)="cancelPlacementMode()" class="px-2 py-1 bg-red-600 text-xs rounded-md">Cancel</button>
+                </div>
+            }
+          }
+           <div class="grid grid-cols-5 md:grid-cols-10 gap-2">
+            @for(hero of activeTeam(); track $index) {
+              <div (click)="onSlotClick($index); $event.stopPropagation()" class="relative aspect-square bg-gray-800/50 rounded-lg flex flex-col items-center justify-center border-2 transition-all duration-200 cursor-pointer" 
+                   [class]="hero ? getRarityBorderClass(hero.rarity) : 'border-gray-700 border-dashed'"
+                   [class.hover:border-purple-400]="!hero && !placementMode()"
+                   [class.ring-4]="placementMode()?.fromIndex === $index"
+                   [class.ring-blue-400]="placementMode()?.type === 'swap'"
+                   [class.animate-pulse-glow-blue]="placementMode()?.type === 'swap' && placementMode()?.fromIndex === $index"
+                   [class.hover:ring-blue-400]="placementMode()?.type === 'swap' && placementMode()?.fromIndex !== $index && !!hero"
+                   [appTooltip]="hero?.name || 'Empty Slot'">
+                @if(hero) {
+                  <span class="font-orbitron text-xl text-gray-200">{{ getHeroInitials(hero.name) }}</span>
+                  <span class="text-xs text-gray-400 mt-1">Lvl {{ hero.level }}</span>
+                } @else {
+                  <span class="text-3xl text-gray-600">+</span>
+                }
+
+                <!-- Context Menu for filled slots -->
+                @if(contextMenu()?.slotIndex === $index) {
+                  <div class="absolute z-30 bg-gray-900 border border-gray-600 rounded-lg shadow-lg p-1 text-sm w-28 animate-pop-in-soft" style="top: 105%; left: 50%; transform: translateX(-50%);">
+                    <button (click)="viewHeroDetails(contextMenu()!.heroId); $event.stopPropagation()" class="w-full text-left px-2 py-1.5 rounded hover:bg-purple-600">Details</button>
+                    <button (click)="startSwap($index); $event.stopPropagation()" class="w-full text-left px-2 py-1.5 rounded hover:bg-purple-600">Swap</button>
+                    <button (click)="startReplace($index); $event.stopPropagation()" class="w-full text-left px-2 py-1.5 rounded hover:bg-purple-600">Replace</button>
+                    <button (click)="removeHero($index); $event.stopPropagation()" class="w-full text-left px-2 py-1.5 rounded hover:bg-red-600">Remove</button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+        
+        <!-- Presets -->
+         <div class="bg-black/30 p-3 rounded-xl border border-purple-500/30">
+            <h2 class="text-lg font-orbitron text-gray-300 mb-2">Team Presets</h2>
+            <div class="space-y-3">
+                @for(preset of presets(); track $index) {
+                    <div class="bg-gray-800/50 p-2 rounded-lg flex flex-col sm:flex-row items-center gap-3">
+                        <input type="text" [value]="preset.name" (blur)="updatePresetName($index, $event)" class="bg-gray-700 text-white font-orbitron rounded-md px-2 py-1 text-sm border border-transparent focus:border-purple-500 focus:ring-0 w-full sm:w-auto">
+                        <div class="flex-grow grid grid-cols-10 gap-1.5 bg-black/30 p-1.5 rounded-md w-full">
+                            @for(hero of preset.heroes; track $index) {
+                                <div class="aspect-square rounded-full flex items-center justify-center text-xs font-bold border" [class]="hero ? getRarityBorderClass(hero.rarity) : 'border-gray-700'" [appTooltip]="hero?.name || 'Empty'">
+                                    @if(hero) { {{ getHeroInitials(hero.name) }} } @else { <span class="text-gray-600 -mt-1">+</span> }
+                                </div>
+                            }
+                        </div>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <button (click)="loadPreset($index)" class="px-3 py-1.5 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 transition-colors text-sm flex-grow sm:flex-grow-0">Load</button>
+                            <button (click)="savePreset($index)" class="px-3 py-1.5 bg-green-600 text-white font-bold rounded-md hover:bg-green-700 transition-colors text-sm flex-grow sm:flex-grow-0">Save</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+      </div>
+    }
+    @case ('roster') {
+      <div class="h-full w-full flex flex-col gap-4 p-4">
+        <!-- Roster Header -->
+        <header class="text-center bg-gray-800/50 p-3 rounded-lg border border-yellow-500/30">
+          @if (placementMode(); as mode) {
+            @if (mode.type === 'place') {
+              <h1 class="text-2xl font-orbitron text-yellow-300">Select a Hero to Place</h1>
+              <p class="text-gray-400 text-sm">Choose an available hero from your roster.</p>
+            }
+            @if (mode.type === 'replace') {
+              @let heroToReplace = activeTeam()[mode.fromIndex];
+              <h1 class="text-2xl font-orbitron text-yellow-300">Select a Replacement</h1>
+              <p class="text-gray-400 text-sm">Choose a hero to replace {{ heroToReplace?.name }}.</p>
+            }
+          }
+          <button (click)="cancelPlacementMode()" class="mt-2 px-4 py-1 bg-red-600 text-sm rounded-md">Cancel Placement</button>
+        </header>
+
+        <!-- Filters -->
+        <div class="flex items-center gap-2 flex-shrink-0 bg-black/30 p-2 rounded-lg">
+          <select (change)="onRoleFilterChange($event)" class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-purple-500 focus:border-purple-500 p-1.5">
+            @for (role of roles; track role) { <option [value]="role">{{ role }}</option> }
+          </select>
+          <button (click)="toggleSortDirection()" class="p-1.5 bg-gray-700 border border-gray-600 rounded-lg hover:bg-gray-600" [appTooltip]="sortDirection() === 'desc' ? 'Sort Descending by Level' : 'Sort Ascending by Level'">
+            @if(sortDirection() === 'desc') {
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 3a1 1 0 000 2h14a1 1 0 000-2H3zm0 4a1 1 0 000 2h14a1 1 0 000-2H3zm0 4a1 1 0 000 2h14a1 1 0 000-2H3zm0 4a1 1 0 000 2h14a1 1 0 000-2H3z" /></svg>
+            } @else {
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3 3a1 1 0 000 2h14a1 1 0 000-2H3zm0 4a1 1 0 000 2h14a1 1 0 000-2H3zm0 4a1 1 0 000 2h14a1 1 0 000-2H3zm0 4a1 1 0 000 2h14a1 1 0 000-2H3z" /></svg>
+            }
+          </button>
+        </div>
+
+        <!-- Roster Grid -->
+        <div class="flex-grow overflow-y-auto pr-2">
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            @for(hero of availableHeroes(); track hero.id) {
+              <div (click)="onRosterHeroClick(hero.id)" class="bg-gray-800/50 rounded-lg p-2 flex flex-col items-center text-center border-2 cursor-pointer transition-all hover:border-yellow-400 hover:ring-2 ring-yellow-400" [class]="getRarityBorderClass(hero.rarity)">
+                <div class="w-16 h-16 rounded-full flex-shrink-0 flex items-center justify-center border-2 text-2xl font-bold bg-gray-900/50" [class]="getRarityBorderClass(hero.rarity)">{{ getHeroInitials(hero.name) }}</div>
+                <p class="font-semibold text-sm text-center truncate w-full mt-1 text-white">{{ hero.name }}</p>
+                <div class="text-xs text-gray-400 flex items-center gap-1">
+                  <span>Lvl {{ hero.level }}</span>
+                  <span class="w-1.5 h-1.5 rounded-full" [class]="getRarityTextColor(hero.rarity).replace('text-', 'bg-')"></span>
+                  <span>{{ hero.role }}</span>
+                </div>
+              </div>
+            } @empty {
+              <p class="col-span-full text-center text-gray-500 italic py-6">No available heroes match filters.</p>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  }
+</div>

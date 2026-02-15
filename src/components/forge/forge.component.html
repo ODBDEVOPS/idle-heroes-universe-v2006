@@ -1,0 +1,130 @@
+<div class="h-full w-full bg-gray-900 flex flex-col animate-fadeIn overflow-hidden p-4 relative">
+  <!-- BG -->
+  <div class="absolute inset-0 bg-gradient-to-br from-gray-900 via-orange-900/40 to-red-900/50 z-0"></div>
+
+  <header class="text-center mb-4 z-10">
+    <h1 class="text-3xl font-orbitron text-orange-400">The Forge</h1>
+    <p class="text-gray-400">Combine three items of the same type and rarity to forge a stronger one.</p>
+  </header>
+
+  <div class="relative z-10 flex-grow grid grid-cols-1 lg:grid-cols-5 gap-4 overflow-hidden">
+    <!-- Left Panel: Inventory -->
+    <div class="lg:col-span-3 bg-black/30 p-2 rounded-xl border border-gray-700/50 flex flex-col">
+        <!-- Tabs -->
+        <div class="flex-shrink-0 flex space-x-1 bg-gray-900/50 p-1 rounded-lg mb-2">
+            @for(slot of ['Weapon', 'Armor', 'Accessory']; track slot) {
+                <button (click)="activeSlotFilter.set(slot)" class="flex-grow py-2 text-sm font-bold rounded-md transition-colors" [class.bg-orange-600]="activeSlotFilter() === slot" [class.hover:bg-orange-900/50]="activeSlotFilter() !== slot">
+                    {{ slot }}s
+                </button>
+            }
+        </div>
+        <!-- Quick Select -->
+        <div class="flex-shrink-0 flex items-center justify-between gap-2 mb-2 p-1 bg-gray-900/50 rounded-lg">
+            <span class="text-xs font-semibold text-gray-400 ml-2">Quick Select:</span>
+            <div class="flex gap-1">
+                <button (click)="autoSelectForCrafting('Common')" class="px-2 py-1 text-xs font-bold bg-gray-700 hover:bg-gray-600 rounded-md">x3 Common</button>
+                <button (click)="autoSelectForCrafting('Rare')" class="px-2 py-1 text-xs font-bold bg-blue-800 hover:bg-blue-700 rounded-md">x3 Rare</button>
+            </div>
+        </div>
+        <!-- Item Grid -->
+        <div class="flex-grow overflow-y-auto pr-2">
+            @if(filteredInventory().length > 0) {
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    @for(item of filteredInventory(); track item.id) {
+                        <div 
+                            (click)="toggleItemSelection(item.id)"
+                            class="relative bg-gray-900 p-2 rounded-lg cursor-pointer border-2 transition-all duration-200"
+                            [class]="getRarityColor(item.rarity)"
+                            [class.ring-4]="selectedItemIds().includes(item.id)"
+                            [class.ring-yellow-300]="selectedItemIds().includes(item.id)"
+                            [class.opacity-50]="(selectedItemIds().length === 3 && !selectedItemIds().includes(item.id)) || isForging()">
+                            <p class="font-bold text-sm" [class]="getRarityTextColor(item.rarity)">
+                                {{ item.name }}
+                                @if(item.enchantLevel > 0) { <span class="text-yellow-400">+{{ item.enchantLevel }}</span> }
+                            </p>
+                            <p class="text-xs text-green-400">{{ formatBonus(item) }}</p>
+                        </div>
+                    }
+                </div>
+            } @else {
+                 <p class="text-gray-500 italic text-center py-10">No {{ activeSlotFilter()?.toLowerCase() }}s in inventory.</p>
+            }
+        </div>
+    </div>
+    
+    <!-- Right Panel: The Anvil -->
+    <div class="lg:col-span-2 bg-pattern-anvil p-4 rounded-xl border-2 border-orange-800/80 flex flex-col justify-between">
+      <h2 class="text-2xl font-orbitron text-orange-300 text-center mb-4">The Anvil</h2>
+      
+      <div class="flex-grow flex flex-col items-center justify-center gap-2">
+          <!-- Slots -->
+          @for (i of [0, 1, 2]; track i) {
+              @let item = selectedItems()[i];
+              <div class="w-48 h-24 bg-gray-800/50 rounded-lg flex items-center justify-center border-4 p-1 text-center relative"
+                   [class]="item ? getRarityColor(item.rarity) : 'border-dashed border-gray-600'">
+                  
+                  <div class="absolute -inset-1 rounded-lg" [class.animate-forge-ingredient-consume]="isForging()"></div>
+  
+                  @if(item) {
+                      <div class="z-10 text-center">
+                          <span class="font-bold text-sm" [class]="getRarityTextColor(item.rarity)">{{ item.name }}</span>
+                          <span class="text-xs text-green-400 block">{{ formatBonus(item) }}</span>
+                      </div>
+                  } @else {
+                      <span class="text-gray-500 text-3xl font-thin">+</span>
+                  }
+              </div>
+              @if (i < 2) {
+                  <div class="h-6 w-1 bg-gray-700 relative">
+                       @if(canCraft()) {
+                          <div class="absolute inset-0 bg-gradient-to-b from-orange-400 via-orange-500 to-transparent animate-energy-flow-vertical"></div>
+                       }
+                  </div>
+              }
+          }
+      </div>
+  
+      <div class="flex-shrink-0 text-center my-4">
+        <div class="h-10 w-1 bg-gray-700 relative mx-auto">
+          @if(canCraft()) {
+              <div class="absolute inset-0 bg-gradient-to-b from-orange-400 via-orange-500 to-transparent animate-energy-flow-vertical"></div>
+          }
+        </div>
+        <div class="relative inline-block p-4 rounded-full bg-pattern-anvil z-10" [class.animate-forge-spark]="isForging()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-orange-400 transition-transform duration-200" [class.animate-jiggle]="isForging()" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M18.8 3.3c.8-.8.8-2 0-2.8s-2-.8-2.8 0L12 4.4 7.9 8.5l-4.2 4.2c-2.3 2.3-2.3 6.1 0 8.5C5.1 22.5 7 23 9 23s3.9-.5 5.3-1.9l4.2-4.2 4.1-4.1-3.7-3.7zM9 19c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3z"/>
+          </svg>
+        </div>
+      </div>
+  
+      <!-- Result -->
+      <div class="flex-shrink-0 flex flex-col items-center">
+           <div class="w-56 h-28 bg-gray-800/50 rounded-lg flex items-center justify-center border-4 p-1 relative"
+                [class]="displayResult() ? getRarityColor(displayResult()!.rarity) : 'border-dashed border-gray-600'">
+              @if(displayResult(); as result) {
+                  <div class="text-center p-1" [class.animate-forge-result-pop]="showCraftAnimation()">
+                      <span class="font-bold text-lg" [class]="getRarityTextColor(result.rarity)">{{ result.rarity }} {{ result.slot }}</span>
+                      <span class="text-sm font-semibold block" [class]="showCraftAnimation() ? 'text-orange-400' : 'text-gray-500'">{{ showCraftAnimation() ? 'Forged!' : '(Preview)' }}</span>
+                  </div>
+              } @else if(!isForging()) {
+                  <span class="text-gray-500 text-lg">Result</span>
+              }
+          </div>
+      </div>
+  
+      <!-- Actions -->
+      <div class="flex-shrink-0 mt-6 space-y-2">
+          <button
+              (click)="handleCraft()"
+              [disabled]="!canCraft() || isForging()"
+              class="w-full py-3 bg-orange-600 text-white font-bold text-lg rounded-md hover:bg-orange-700 transition-all duration-200 disabled:bg-gray-600 disabled:cursor-not-allowed"
+              [class.animate-pulse-glow-orange]="canCraft() && !isForging()">
+              {{ isForging() ? 'Forging...' : 'Forge Item' }}
+          </button>
+          <button (click)="clearSelection()" [disabled]="selectedItemIds().length === 0 || isForging()" class="w-full py-1.5 bg-gray-700 text-white text-sm font-semibold rounded-md hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-500">
+              Clear Selection
+          </button>
+      </div>
+    </div>
+  </div>
+</div>

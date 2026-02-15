@@ -1,0 +1,119 @@
+<div class="h-full w-full bg-gray-800 p-4 flex flex-col animate-fadeIn">
+  <header class="text-center mb-4">
+    <h1 class="text-3xl font-orbitron text-yellow-400">Quests</h1>
+    <p class="text-gray-400">Complete objectives to earn rewards.</p>
+  </header>
+  
+  <!-- Tabs -->
+  <div class="mb-4 flex space-x-1 sm:space-x-2 border-b-2 border-gray-700">
+    @for(category of questCategories; track category) {
+      <button
+        (click)="changeCategory(category)"
+        class="px-3 sm:px-4 py-2 text-sm sm:text-base font-orbitron transition-all duration-200 flex-grow text-center transform"
+        [class.text-yellow-400]="activeCategory() === category"
+        [class.border-b-2]="activeCategory() === category"
+        [class.border-yellow-400]="activeCategory() === category"
+        [class.text-gray-400]="activeCategory() !== category"
+        [class.hover:text-white]="activeCategory() !== category"
+        [class.hover:bg-gray-700/50]="activeCategory() !== category"
+        [class.hover:-translate-y-0.5]="activeCategory() !== category"
+      >
+        {{ category }}
+      </button>
+    }
+  </div>
+
+  <div class="flex-grow overflow-y-auto pr-2 -mr-2">
+    @if(activeCategory() === 'Chronicle') {
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        @for (quest of chronicleQuests(); track quest.id) {
+          <div 
+            class="bg-gray-900/50 rounded-lg p-4 border-l-4 transition-all duration-300 flex flex-col"
+            [class.border-green-500]="quest.isCompleted && !quest.isClaimed"
+            [class.border-indigo-400]="!quest.isCompleted"
+            [class.border-gray-700]="quest.isClaimed"
+            [class.opacity-60]="quest.isClaimed"
+          >
+            <div class="flex-grow">
+              <p class="text-xs text-indigo-300 font-semibold">{{ quest.heroName }}'s Destiny</p>
+              <h3 class="font-bold text-lg text-white">{{ quest.title }}</h3>
+              <p class="text-sm italic text-gray-400">"{{ quest.narrative }}"</p>
+            </div>
+            
+            <div class="mt-3 pt-3 border-t border-gray-700/50 space-y-2">
+              <div class="flex justify-between items-center text-sm">
+                <p class="text-yellow-300 font-semibold">
+                  Reward: <span class="text-white">💧 {{ quest.reward.amount }} Shards</span>
+                </p>
+                @if(!quest.isCompleted) {
+                  <p class="font-mono text-gray-400">
+                    {{ formatNumber(quest.progress) }} / {{ formatNumber(quest.target) }}
+                  </p>
+                }
+              </div>
+              @if(!quest.isCompleted) {
+                <div class="w-full bg-gray-700 rounded-full h-2.5"><div class="bg-indigo-400 h-2.5 rounded-full" [style.width.%]="(quest.progress / quest.target) * 100"></div></div>
+              }
+              @if(quest.isCompleted && !quest.isClaimed) {
+                <button (click)="claimChronicleReward(quest.heroId, quest.memoryId, quest.id)" class="w-full mt-2 py-2 bg-green-600 text-white font-bold rounded-md hover:bg-green-700 transition-colors animate-pulse-glow">
+                  Claim
+                </button>
+              } @else if(quest.isClaimed) {
+                 <div class="w-full mt-2 py-2 bg-gray-700 text-gray-400 font-bold rounded-md text-center">Claimed</div>
+              }
+            </div>
+          </div>
+        } @empty {
+          <div class="col-span-full text-center py-10 text-gray-500 italic">
+            <p>No Chronicle quests are active.</p>
+            <p class="mt-1">Visit the Astral Chronicle to forge a hero's destiny.</p>
+          </div>
+        }
+      </div>
+    } @else {
+      @if (processedQuests().length > 0) {
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          @for (quest of processedQuests(); track quest.id) {
+            <div 
+              class="bg-gray-900/50 rounded-lg p-4 flex flex-col border-l-4 transition-all duration-300"
+              [class.border-green-500]="quest.isCompleted && !quest.isClaimed"
+              [class.border-yellow-500]="!quest.isCompleted"
+              [class.border-gray-700]="quest.isClaimed"
+              [class.opacity-60]="quest.isClaimed"
+            >
+              <div class="flex-grow">
+                <h3 class="font-bold text-lg text-white">{{ quest.description }}</h3>
+                <p class="text-sm text-yellow-300 flex items-center gap-2">
+                  <span class="font-semibold">Reward:</span>
+                  <span>💰 {{ formatNumber(quest.reward.gold) }}</span>
+                  @if(quest.reward.prestigePoints) {
+                    <span>💎 {{ formatNumber(quest.reward.prestigePoints) }}</span>
+                  }
+                </p>
+              </div>
+              
+              <div class="mt-3 pt-3 border-t border-gray-700/50">
+                @if(quest.isCompleted && !quest.isClaimed) {
+                  <button (click)="claimReward(quest.id)" class="w-full py-2 bg-green-600 text-white font-bold rounded-md hover:bg-green-700 transition-colors animate-pulse-glow">
+                    Claim
+                  </button>
+                } @else if(quest.isClaimed) {
+                  <div class="w-full py-2 bg-gray-700 text-gray-400 font-bold rounded-md text-center">Claimed</div>
+                } @else {
+                  <div class="w-full bg-gray-700 rounded-full h-4 relative">
+                    <div class="bg-yellow-500 h-4 rounded-full" [style.width.%]="(quest.progress / quest.targetValue) * 100"></div>
+                    <span class="absolute inset-0 text-center text-xs font-bold text-black leading-4">{{ formatNumber(quest.progress) }} / {{ quest.target }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+         <div class="text-center py-10 text-gray-500 italic">
+          <p>No quests in this category yet.</p>
+        </div>
+      }
+    }
+  </div>
+</div>

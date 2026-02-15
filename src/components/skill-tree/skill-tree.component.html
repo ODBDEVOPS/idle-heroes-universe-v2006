@@ -1,0 +1,107 @@
+<div class="h-full w-full bg-gray-900 flex flex-col animate-fadeIn relative overflow-hidden p-4">
+  <!-- Background Elements -->
+  <div class="absolute inset-0 bg-gradient-to-br from-gray-900 via-purple-900/40 to-indigo-900/30 z-0"></div>
+  <div class="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-cyan-600/20 rounded-full blur-3xl animate-bg-float"></div>
+  <div class="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-green-600/20 rounded-full blur-3xl animate-bg-float" style="animation-direction: reverse;"></div>
+
+  <header class="relative z-10 text-center mb-4 flex justify-between items-center">
+    <div></div>
+    <div class="flex-grow">
+      <h1 class="text-3xl font-orbitron text-purple-300">Ascension Chamber</h1>
+      <p class="text-gray-400">Prestige to grow stronger and unlock new skills.</p>
+    </div>
+    <div class="w-48 text-right font-semibold bg-gray-800/70 px-4 py-1 rounded-full border border-cyan-400/80">
+        <span class="text-cyan-300">💎 {{ formatNumber(gameService().gameState().prestigePoints) }}</span>
+    </div>
+  </header>
+  
+  <div class="relative z-10 flex-grow grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden">
+    <!-- Left Panel: Prestige Hub -->
+    <div class="lg:col-span-1 bg-black/30 p-6 rounded-xl border border-gray-700/50 flex flex-col justify-between">
+        <div>
+            <h2 class="text-2xl font-orbitron text-green-400 text-center mb-4">Prestige</h2>
+            <p class="text-sm text-gray-400 mb-6">Reset your stage progress and gold to earn Prestige Points and Tomes of Skill. This is the primary way to gain permanent power.</p>
+            
+            <div class="space-y-4">
+                <div class="bg-gray-800/50 p-3 rounded-lg text-center">
+                    <p class="text-sm text-gray-400">Current Stage</p>
+                    <p class="text-2xl font-bold font-orbitron text-white">{{ formatNumber(gameService().gameState().stage) }}</p>
+                </div>
+                <div class="bg-gray-800/50 p-3 rounded-lg text-center">
+                    <p class="text-sm text-gray-400">Required Stage</p>
+                    <p class="text-2xl font-bold font-orbitron" [class.text-green-400]="gameService().canPrestige()" [class.text-red-400]="!gameService().canPrestige()">50</p>
+                </div>
+                <div class="bg-gray-800/50 p-3 rounded-lg text-center">
+                    <p class="text-sm text-gray-400">Prestige Rewards</p>
+                    <div class="text-xl font-bold font-orbitron text-white mt-1">
+                        <span>💎 {{ formatNumber(gameService().getPrestigePointsReward()) }}</span>
+                        <span class="mx-2">+</span>
+                        <span>📚 {{ formatNumber(1) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <button (click)="isPrestigeConfirmOpen.set(true)" [disabled]="!gameService().canPrestige()" class="w-full mt-6 py-4 bg-green-600 text-white font-bold text-xl rounded-md hover:bg-green-700 transition-all duration-200 disabled:bg-gray-600 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95 disabled:hover:scale-100 shadow-lg" [class.animate-pulse-glow]="gameService().canPrestige()" [class.hover:shadow-xl]="gameService().canPrestige()" [class.hover:shadow-green-500/40]="gameService().canPrestige()">
+            Prestige Now
+        </button>
+    </div>
+
+    <!-- Right Panel: Skill Tree -->
+    <div class="lg:col-span-2 flex flex-col bg-black/30 p-2 rounded-xl border border-gray-700/50 overflow-hidden">
+        <h2 class="text-2xl font-orbitron text-purple-300 text-center mb-2 flex-shrink-0 p-2">Skill Tree</h2>
+        <div class="relative flex-grow rounded-lg bg-black/30 border border-gray-700 overflow-auto">
+            <div class="relative w-full h-[1200px]">
+                <!-- Connections -->
+                <svg class="absolute top-0 left-0 w-full h-full pointer-events-none">
+                    @for(conn of connections(); track $index) {
+                        <line 
+                            [attr.x1]="conn.x1 + '%'" 
+                            [attr.y1]="conn.y1 + '%'" 
+                            [attr.x2]="conn.x2 + '%'" 
+                            [attr.y2]="conn.y2 + '%'" 
+                            class="transition-all duration-500"
+                            [class.stroke-red-500]="conn.branch === 'Conqueror' && conn.unlocked"
+                            [class.stroke-yellow-500]="conn.branch === 'Hoarder' && conn.unlocked"
+                            [class.stroke-blue-500]="conn.branch === 'Zealot' && conn.unlocked"
+                            [class.stroke-gray-400]="conn.branch === 'Core' && conn.unlocked"
+                            [class.stroke-gray-700]="!conn.unlocked"
+                            stroke-width="3"
+                        />
+                    }
+                </svg>
+
+                <!-- Nodes -->
+                @for(node of skillTreeData; track node.id) {
+                    <div 
+                        [class]="getNodeClasses(node)"
+                        [style.left]="'calc(' + node.position.x + '% - ' + (node.isKeystone ? '28px' : '20px') + ')'"
+                        [style.top]="'calc(' + node.position.y + '% - ' + (node.isKeystone ? '28px' : '20px') + ')'"
+                        (click)="unlockNode(node)"
+                        [appTooltip]="getTooltipText(node)"
+                        >
+                        <span>{{ node.icon }}</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- Prestige Confirmation Modal -->
+  @if(isPrestigeConfirmOpen()) {
+    <div class="absolute inset-0 bg-black/70 flex items-center justify-center z-50 backdrop-blur-sm" (click)="cancelPrestige()">
+      <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 border-2 border-green-500 animate-pop-in-soft" (click)="$event.stopPropagation()">
+        <h2 class="text-2xl font-orbitron text-green-400 mb-2">Confirm Prestige</h2>
+        <p class="text-gray-300 mb-4">Are you sure you want to prestige? This will reset your current stage, gold, and hero levels. Your Prestige Points, Skill Tree, artifacts, and other permanent progress will be kept.</p>
+        <div class="bg-gray-900/50 rounded-lg p-4 text-center">
+            <p class="text-lg font-semibold text-white">You will gain: <span class="text-cyan-300">💎 {{ formatNumber(gameService().getPrestigePointsReward()) }}</span></p>
+        </div>
+        <div class="flex justify-center gap-4 mt-6">
+            <button (click)="cancelPrestige()" class="px-6 py-2 bg-gray-600 hover:bg-gray-500 rounded-md font-bold transition-colors">Cancel</button>
+            <button (click)="prestige()" class="px-6 py-2 bg-green-600 hover:bg-green-700 rounded-md font-bold transition-colors">Confirm</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

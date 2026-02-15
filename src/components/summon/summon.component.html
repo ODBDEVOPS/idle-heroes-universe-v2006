@@ -1,0 +1,222 @@
+<div class="h-full w-full bg-gray-800 p-4 flex flex-col animate-fadeIn overflow-hidden">
+  <header class="text-center mb-4">
+    <h1 class="text-3xl font-orbitron text-cyan-400">Hero Summon</h1>
+    <p class="text-gray-400">Call forth new heroes to join your cause.</p>
+  </header>
+  
+  <div class="flex-grow overflow-y-auto pr-2 grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+    
+    <!-- Summon Burst Animation Container -->
+    @if(isSummoning(); as type) {
+      <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+        <div class="relative" [class.md:translate-x-1/2]="type === 'standard'" [class.md:-translate-x-1/2]="type === 'premium'">
+          @for (particle of summonParticles(); track particle.id) {
+            <div 
+              class="absolute rounded-full"
+              style="animation: summon-burst-particle 0.8s ease-out forwards;"
+              [style.width]="particle.width"
+              [style.height]="particle.height"
+              [style.background-color]="particle.backgroundColor"
+              [style.--tx]="particle.tx"
+              [style.--ty]="particle.ty"
+            ></div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Standard Summon -->
+    @let standardState = standardSummonButtonState();
+    <div class="bg-gray-900 rounded-lg p-6 flex flex-col justify-between items-center border-2 border-gray-600 transition-all duration-300 hover:border-gray-400"
+         appTooltip="Summon heroes using Gold. Has a chance for Common, Rare, or Epic heroes.">
+      <h2 class="text-2xl font-orbitron text-white text-center">Standard Summon</h2>
+      <div class="relative w-48 h-48 my-4 flex items-center justify-center">
+        @if (standardState.state === 'free') {
+          <div class="absolute -top-2 -right-2 z-20 px-2 py-1 bg-green-500 text-white text-xs font-bold rounded-full animate-pulse">FREE</div>
+        }
+        <!-- Portal -->
+        <div class="absolute w-full h-full rounded-full bg-gray-800 animate-portal-pulse-standard"></div>
+        <div class="absolute w-40 h-40 rounded-full bg-gray-900 border-4 border-gray-600"></div>
+        <div class="absolute w-24 h-24 rounded-full bg-black bg-[radial-gradient(ellipse_at_center,rgba(200,200,220,0.2)_0%,transparent_70%)]"></div>
+        <div class="absolute w-32 h-32 border-t-2 border-gray-500 rounded-full animate-spin-slow-8"></div>
+      </div>
+      <div class="w-full flex flex-col gap-2">
+        <div class="flex gap-2">
+            <button 
+            (click)="onStandardSummonClick()"
+            [disabled]="standardState.state === 'cooldown' || !!isSummoning()"
+            class="w-1/2 py-3 font-bold rounded-md transition-all duration-200 disabled:cursor-not-allowed transform hover:scale-105 active:scale-100 disabled:hover:scale-100 relative z-10"
+            [class.bg-green-600]="standardState.state === 'free'"
+            [class.text-white]="standardState.state === 'free'"
+            [class.hover:bg-green-500]="standardState.state === 'free'"
+            [class.bg-gray-600]="standardState.state === 'payable'"
+            [class.text-white]="standardState.state === 'payable'"
+            [class.hover:bg-gray-500]="standardState.state === 'payable'"
+            [class.bg-gray-800]="standardState.state === 'cooldown'"
+            [class.text-gray-500]="standardState.state === 'cooldown'"
+            [appTooltip]="standardState.state === 'cooldown' ? 'Next free summon available in ' + formatDuration(standardState.cooldownSeconds) : ''"
+            >
+            @switch(standardState.state) {
+                @case('free') {
+                <div>Free Summon</div>
+                <div class="text-xs text-green-200">Ready!</div>
+                }
+                @case('payable') {
+                <div>Summon x1</div>
+                <div class="text-xs text-yellow-200">💰 {{ formatNumber(standardSummonCost) }}</div>
+                }
+                @case('cooldown') {
+                <div>Free Summon</div>
+                <div class="text-xs text-gray-400">{{ formatDuration(standardState.cooldownSeconds) }}</div>
+                }
+            }
+            </button>
+            <button 
+            (click)="onSummonMultiple('standard', 10)"
+            [disabled]="gameService().gameState().gold < (standardSummonCost * 10) || !!isSummoning()"
+            class="w-1/2 py-3 bg-gray-600 text-white font-bold rounded-md hover:bg-gray-500 transition-all duration-200 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed transform hover:scale-105 active:scale-100 disabled:hover:scale-100 relative z-10">
+            <div>Summon x10</div>
+            <div class="text-xs text-yellow-200">💰 {{ formatNumber(standardSummonCost * 10) }}</div>
+            </button>
+        </div>
+        <div class="text-xs text-gray-400 text-center bg-black/30 py-1 rounded-md">
+            Guaranteed Epic in <span class="font-bold text-white">{{ PITY_LIMIT_STANDARD - standardPityCount() }}</span> summons.
+        </div>
+      </div>
+    </div>
+
+    <!-- Premium Summon -->
+    <div class="bg-gray-900 rounded-lg p-6 flex flex-col justify-between items-center border-2 border-cyan-500 shadow-lg shadow-cyan-500/20 transition-all duration-300 hover:border-cyan-300"
+         appTooltip="Summon heroes using Prestige Points. Guaranteed Rare or better, with a chance for Epic and Legendary heroes.">
+      <h2 class="text-2xl font-orbitron text-cyan-400 text-center">Premium Summon</h2>
+      <div class="relative w-48 h-48 my-4 flex items-center justify-center">
+        <!-- Particles -->
+        <div class="absolute inset-0 pointer-events-none">
+          <div class="absolute top-1/2 left-1/2 w-2 h-2 rounded-full bg-cyan-300 animate-portal-particle-float-3s" style="animation-delay: 0s"></div>
+          <div class="absolute top-1/2 left-1/2 w-3 h-3 rounded-full bg-purple-400 animate-portal-particle-float-4s" style="animation-delay: -1s"></div>
+          <div class="absolute top-1/2 left-1/2 w-2 h-2 rounded-full bg-white animate-portal-particle-float-2p5s" style="animation-delay: -2s"></div>
+          <div class="absolute top-1/2 left-1/2 w-2 h-2 rounded-full bg-purple-300 animate-portal-particle-float-3p5s" style="animation-delay: -3s"></div>
+        </div>
+        <!-- Portal -->
+        <div class="absolute w-full h-full rounded-full bg-purple-900/50 animate-portal-pulse-premium"></div>
+        <div class="absolute w-40 h-40 rounded-full bg-gray-900 border-4 border-purple-500"></div>
+        <div class="absolute w-24 h-24 rounded-full bg-black bg-[radial-gradient(ellipse_at_center,rgba(34,211,238,0.3)_0%,transparent_70%)]"></div>
+        <div class="absolute w-32 h-32 border-t-2 border-cyan-400 rounded-full animate-spin-slow-6"></div>
+      </div>
+      <div class="w-full flex flex-col gap-2">
+        <button 
+            (click)="onSummon('premium')"
+            [disabled]="gameService().gameState().prestigePoints < premiumSummonCost || !!isSummoning()"
+            class="w-full py-3 bg-cyan-600 text-white font-bold rounded-md hover:bg-cyan-500 transition-all duration-200 disabled:bg-cyan-900/50 disabled:text-gray-400 disabled:cursor-not-allowed transform hover:scale-105 active:scale-100 disabled:hover:scale-100 shadow-lg hover:shadow-xl hover:shadow-cyan-500/40 relative z-10">
+            <div>Summon</div>
+            <div class="text-xs text-cyan-200">💎 {{ formatNumber(premiumSummonCost) }}</div>
+        </button>
+        <div class="text-xs text-gray-400 text-center bg-black/30 py-1 rounded-md">
+            Guaranteed Legendary in <span class="font-bold text-white">{{ PITY_LIMIT_PREMIUM - premiumPityCount() }}</span> summons.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Summon Result Modal -->
+@if(isModalOpen() && summonResult(); as results) {
+  <div class="absolute inset-0 bg-black/80 flex items-center justify-center z-50 backdrop-blur-sm" (click)="closeModal()">
+    @if(results.length === 1; as isSingle) {
+        @let result = results[0];
+        <div 
+          class="bg-gray-800 rounded-lg shadow-xl w-full max-w-sm border-2 animate-modal-fade-in relative overflow-hidden" 
+          [class]="getRarityColor(result.hero.rarity)" 
+          (click)="$event.stopPropagation()">
+          
+          <div class="absolute inset-0 shimmering-bg z-0"></div>
+
+          <!-- Main Curtain Reveal for the whole modal -->
+          <div class="absolute inset-0 z-20 flex pointer-events-none">
+            <div class="w-1/2 bg-gradient-to-r from-purple-900 to-indigo-900 animate-curtain-reveal-left"></div>
+            <div class="w-1/2 bg-gradient-to-l from-purple-900 to-indigo-900 animate-curtain-reveal-right"></div>
+          </div>
+          
+          <!-- Content that appears after curtain -->
+          <div class="p-8 text-center relative z-10">
+            @if(result.isNew) {
+                <h2 class="text-2xl font-orbitron text-green-400 mb-2 animate-hero-content-fade-in" style="animation-delay: 0.8s;">New Hero!</h2>
+            } @else {
+                <h2 class="text-2xl font-orbitron text-yellow-400 mb-2 animate-hero-content-fade-in" style="animation-delay: 0.8s;">Duplicate Hero!</h2>
+            }
+            
+            <!-- Portrait with its own reveal -->
+            <div class="w-32 h-32 rounded-md flex items-center justify-center bg-gray-700/50 border-4 mx-auto mb-4 relative overflow-hidden" [class]="getRarityColor(result.hero.rarity)">
+                <!-- Placeholder that fades out -->
+                <div class="absolute inset-0 flex items-center justify-center animate-placeholder-fade-out z-10" style="animation-delay: 0.4s;">
+                    <span class="font-orbitron text-7xl text-purple-400/30">?</span>
+                </div>
+                <!-- Actual Initials that fade in -->
+                <div class="absolute inset-0 flex items-center justify-center animate-hero-content-fade-in z-20" style="animation-delay: 0.7s;">
+                    <span class="font-orbitron text-5xl text-gray-200">{{ getHeroInitials(result.hero.name) }}</span>
+                </div>
+            </div>
+
+            <!-- Staggered fade in for details -->
+            <h3 class="font-bold text-2xl animate-hero-content-fade-in" style="animation-delay: 1.0s;">{{ result.hero.name }}</h3>
+            <p class="text-lg font-semibold mb-4 animate-hero-content-fade-in" [class]="getRarityTextColor(result.hero.rarity)" style="animation-delay: 1.1s;">{{ result.hero.rarity }} {{ result.hero.role }}</p>
+
+            @if(result.goldBonus || result.shardsGained) {
+                <div class="mt-4 bg-gray-900/50 p-2 rounded-md animate-hero-content-fade-in" style="animation-delay: 1.2s;">
+                    <h4 class="font-semibold text-yellow-300">Duplicate Bonus</h4>
+                    @if(result.goldBonus) {
+                        <p class="text-md text-yellow-300">💰 +{{ formatNumber(result.goldBonus) }} Gold</p>
+                    }
+                    @if(result.shardsGained) {
+                        <p class="text-md text-purple-300">💧 +{{ result.shardsGained }} {{result.hero.name}} Shards</p>
+                    }
+                </div>
+            }
+
+            <button (click)="closeModal()" class="mt-6 w-full py-2 bg-purple-600 text-white font-bold rounded-md hover:bg-purple-700 transition-colors transform active:scale-95 animate-hero-content-fade-in" style="animation-delay: 1.3s;">
+              Continue
+            </button>
+          </div>
+        </div>
+    } @else {
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-lg border-2 border-gray-500 animate-modal-fade-in" (click)="$event.stopPropagation()">
+            <header class="p-4 text-center border-b border-gray-700">
+                <h2 class="text-2xl font-orbitron text-white">Summon Results</h2>
+            </header>
+            <div class="p-4 max-h-[60vh] overflow-y-auto">
+                <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+                    @for(result of results; track $index) {
+                        <div class="relative bg-gray-900 rounded-md p-2 flex flex-col items-center justify-start text-center border" [class]="getRarityColor(result.hero.rarity)">
+                            @if(result.isNew) {
+                                <span class="absolute -top-2 -right-2 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full z-10 animate-new-badge-pulse">NEW</span>
+                            }
+                            <div class="w-16 h-16 rounded-md flex items-center justify-center bg-gray-700/50 border-2" [class]="getRarityColor(result.hero.rarity)">
+                                <span class="font-orbitron text-3xl text-gray-200">{{ getHeroInitials(result.hero.name) }}</span>
+                            </div>
+                            <p class="text-xs font-bold leading-tight mt-1" [class]="getRarityTextColor(result.hero.rarity)">{{ result.hero.rarity }}</p>
+                        </div>
+                    }
+                </div>
+            </div>
+            <footer class="p-4 border-t border-gray-700 text-center space-y-3">
+                @if(totalGoldBonus() > 0) {
+                    <p class="text-lg text-yellow-300">Total Duplicate Bonus: 💰 {{ formatNumber(totalGoldBonus()) }}</p>
+                }
+                @if(totalShardsGained().length > 0) {
+                    <div class="text-left bg-gray-900/50 p-2 rounded-md">
+                        <p class="text-md text-purple-300 font-semibold mb-1">Total Shards Gained:</p>
+                        <ul class="text-sm list-disc list-inside ml-4">
+                        @for(shardInfo of totalShardsGained(); track shardInfo.heroName) {
+                            <li class="text-gray-300">💧 +{{shardInfo.amount}} {{shardInfo.heroName}} Shards</li>
+                        }
+                        </ul>
+                    </div>
+                }
+                <button (click)="closeModal()" class="w-full max-w-xs mx-auto py-2 bg-purple-600 text-white font-bold rounded-md hover:bg-purple-700 transition-colors transform active:scale-95">
+                  Continue
+                </button>
+            </footer>
+        </div>
+    }
+  </div>
+}

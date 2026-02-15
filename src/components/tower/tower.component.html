@@ -1,0 +1,97 @@
+<div class="h-full w-full bg-gray-900 flex flex-col animate-fadeIn relative overflow-hidden p-4">
+  @let section = currentSection();
+
+  <!-- Themed Background -->
+  <div class="absolute inset-0 z-0 transition-all duration-1000" [style.background]="section?.theme.background || 'black'"></div>
+
+  <!-- Fight Result Banners -->
+  @if (fightResult() === 'victory') {
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+      <div class="text-center animate-stage-clear">
+        <h2 class="text-6xl font-orbitron font-bold text-green-400 drop-shadow-[0_5px_5px_rgba(0,0,0,0.7)]">VICTORY!</h2>
+        <p class="text-2xl text-white drop-shadow-lg">Floor {{ gameService().gameState().towerFloor - 1 }} Cleared</p>
+      </div>
+    </div>
+  }
+  @if (fightResult() === 'defeat') {
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+      <div class="text-center animate-stage-clear">
+        <h2 class="text-6xl font-orbitron font-bold text-red-500 drop-shadow-[0_5px_5px_rgba(0,0,0,0.7)]">DEFEAT</h2>
+        <p class="text-2xl text-white drop-shadow-lg">The Tower claims you... for now.</p>
+      </div>
+    </div>
+  }
+  
+  @switch (towerView()) {
+    @case ('hub') {
+      <div class="relative z-10 flex flex-col items-center justify-center h-full animate-fadeIn">
+        <header class="text-center mb-6">
+          <h1 class="text-4xl md:text-5xl font-orbitron text-red-400 drop-shadow-lg">Tower of Trials</h1>
+          <p class="text-gray-300">Climb the tower for great rewards. Progress is permanent.</p>
+        </header>
+        <div class="bg-black/50 p-8 rounded-xl shadow-2xl border-2 border-red-500/50 text-center max-w-md w-full">
+            <h2 class="text-2xl font-orbitron text-white">Current Section: <span [style.color]="section?.theme.textColor || 'white'">{{ section?.name || 'The Pinnacle' }}</span></h2>
+            <p class="text-gray-400 mt-2">Your highest floor reached.</p>
+            <div class="my-4 font-orbitron text-6xl font-bold text-white drop-shadow-md">
+              {{ gameService().gameState().towerFloor }}
+            </div>
+            <button (click)="enterTower()"
+                    class="w-full py-4 bg-red-600 text-white font-bold text-xl rounded-md hover:bg-red-700 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl hover:shadow-red-500/40">
+                Enter the Tower
+            </button>
+        </div>
+      </div>
+    }
+    @case ('choice') {
+      <div class="relative z-10 flex flex-col items-center justify-center h-full animate-fadeIn">
+        <header class="text-center mb-6">
+          <h1 class="text-3xl font-orbitron" [style.color]="section?.theme.textColor || 'white'">{{section?.name}} - Floor {{ gameService().gameState().towerFloor }}</h1>
+          <p class="text-gray-300">Choose your path forward.</p>
+        </header>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
+          @for(challenge of gameService().towerChoices(); track challenge.type) {
+            <div (click)="selectChallenge(challenge)" class="group bg-black/50 p-6 rounded-2xl border-2 flex flex-col items-center text-center cursor-pointer transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl"
+                 [class]="challenge.style.borderColor" [class]="challenge.style.shadowColor">
+              <div class="text-6xl mb-4 transition-transform duration-300 group-hover:scale-110" [innerHtml]="challenge.style.icon"></div>
+              <h2 class="font-orbitron text-2xl font-bold" [class]="challenge.style.textColor">{{ challenge.title }}</h2>
+              <p class="text-sm text-gray-400 mt-2 flex-grow">{{ challenge.description }}</p>
+              <div class="mt-4 pt-4 border-t w-full" [class]="challenge.style.dividerColor">
+                <p class="text-xs font-bold text-gray-300 uppercase">Potential Rewards</p>
+                <p class="text-sm text-gray-200 mt-1">{{ challenge.rewardText }}</p>
+              </div>
+            </div>
+          }
+        </div>
+         <button (click)="exitTower()" class="mt-8 px-4 py-2 bg-gray-700/50 hover:bg-gray-600/50 text-white font-bold rounded-lg transition-colors">Exit Tower</button>
+      </div>
+    }
+    @case ('combat') {
+      @if (gameService().towerEnemy(); as enemy) {
+        <div class="flex-grow flex flex-col items-center justify-center relative z-10 p-4 animate-fadeIn">
+          <div class="absolute top-4 right-4 bg-black/50 p-2 rounded-lg text-center">
+            <div class="font-orbitron text-4xl text-red-400">{{ fightTimer() }}</div>
+            <div class="text-xs text-gray-300">SECONDS LEFT</div>
+          </div>
+          <div class="text-center mb-4">
+            <h2 class="text-3xl font-bold font-orbitron drop-shadow-md text-red-300">{{ enemy.name }}</h2>
+            <p class="text-xl text-gray-200">{{ formatNumber(enemy.currentHp) }} / {{ formatNumber(enemy.maxHp) }}</p>
+          </div>
+          <div class="w-full max-w-md bg-gray-700/80 rounded-full h-8 border-2 border-red-500 mb-4"><div class="bg-red-600 h-full rounded-full transition-all duration-200" [style.width.%]="enemyHpPercentage()"></div></div>
+          <pre (click)="onEnemyClick()" class="text-4xl md:text-5xl text-center text-red-400 font-mono cursor-pointer select-none drop-shadow-lg p-4 transition-transform duration-100 ease-out hover:scale-105 active:scale-95 leading-tight">{{ enemy.asciiArt }}</pre>
+          <div class="mt-4 bg-gray-900/70 px-4 py-2 rounded-full border border-purple-400"><span class="text-lg font-bold text-purple-400">Your DPS: {{ formatNumber(gameService().totalDps()) }}</span></div>
+        </div>
+      }
+    }
+    @case ('result') {
+      <div class="relative z-10 flex flex-col items-center justify-center h-full animate-fadeIn">
+         @if(resultMessage(); as msg) {
+            <div class="bg-black/60 p-8 rounded-xl shadow-2xl border-2 border-yellow-500/50 text-center max-w-md w-full">
+              <h2 class="text-2xl font-orbitron text-yellow-300">{{ msg.title }}</h2>
+              <p class="text-gray-300 mt-4 text-lg">{{ msg.description }}</p>
+              <button (click)="proceedFromResult()" class="mt-6 w-full py-3 bg-yellow-600 text-black font-bold text-xl rounded-md hover:bg-yellow-500 transition-colors">Continue</button>
+            </div>
+         }
+      </div>
+    }
+  }
+</div>

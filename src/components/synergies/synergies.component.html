@@ -1,0 +1,77 @@
+<div class="h-full w-full bg-gray-800 p-4 flex flex-col animate-fadeIn">
+  <header class="text-center mb-4">
+    <h1 class="text-3xl font-orbitron text-green-400">Team Synergies</h1>
+    <p class="text-gray-400">Gain bonuses by fielding multiple heroes of the same role.</p>
+  </header>
+
+  <div class="flex-grow overflow-y-auto pr-2 space-y-6">
+    <!-- Active Synergies -->
+    <div>
+      <h2 class="text-2xl font-orbitron text-green-300 mb-3 border-b-2 border-gray-700 pb-2">Active Bonuses</h2>
+      @if (gameService().activeSynergies().length > 0) {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          @for (synergy of gameService().activeSynergies(); track synergy.role) {
+            <div class="bg-gray-900 rounded-lg p-4 border-l-4 border-green-500 animate-fadeIn">
+              <div class="flex items-center gap-3">
+                <svg class="h-8 w-8 text-green-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <path [attr.d]="roleIcons[synergy.role]"></path>
+                </svg>
+                <div>
+                  <h3 class="font-bold text-lg text-white">{{ synergy.role }} Synergy</h3>
+                  <p class="text-md text-green-300 font-semibold">{{ synergy.description }}</p>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="text-gray-500 italic text-center py-4">No synergies are currently active. Add more heroes of the same role to your team!</p>
+      }
+    </div>
+
+    <!-- All Possible Synergies -->
+    <div class="border-t-2 border-gray-700 pt-6">
+      <h2 class="text-2xl font-orbitron text-gray-300 mb-3 text-center">Synergy Compendium</h2>
+      <div class="space-y-4">
+        @for (synergy of allSynergies(); track synergy.role) {
+          <div class="bg-gray-900/50 rounded-lg p-4">
+            <div class="flex items-center gap-4 mb-3">
+              <svg class="h-10 w-10 text-gray-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <path [attr.d]="roleIcons[synergy.role]"></path>
+              </svg>
+              <div>
+                 <h3 class="font-orbitron font-bold text-xl text-white">{{ synergy.role }}</h3>
+                 <p class="text-sm text-gray-400">Active Heroes: {{ activeHeroesByRole()[synergy.role] || 0 }}</p>
+              </div>
+            </div>
+            
+            <div class="space-y-2">
+              @for (tier of synergy.bonuses; track tier.count) {
+                @let currentCount = activeHeroesByRole()[synergy.role] || 0;
+                @let isTierActive = currentCount >= tier.count;
+                <div class="bg-gray-800 p-3 rounded-md flex items-center justify-between"
+                     [class.border-l-4]="isTierActive"
+                     [class.border-green-500]="isTierActive"
+                     [class.opacity-50]="!isTierActive && currentCount > 0 && currentCount < tier.count">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center font-bold text-lg"
+                         [class.bg-green-600]="isTierActive"
+                         [class.text-white]="isTierActive"
+                         [class.text-gray-400]="!isTierActive">
+                      {{ tier.count }}
+                    </div>
+                    <div>
+                      <p class="font-semibold" [class.text-white]="isTierActive" [class.text-gray-300]="!isTierActive">
+                        {{ tier.description }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

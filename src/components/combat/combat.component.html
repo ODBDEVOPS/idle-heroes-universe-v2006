@@ -1,0 +1,296 @@
+<div class="h-full w-full flex flex-col bg-gray-900 animate-fadeIn overflow-hidden" [class.animate-screen-shake]="!!gameService().lastSkillUsed()">
+  <!-- Dynamic Background & Color Grading -->
+  <div class="absolute inset-0 bg-gradient-to-tr from-indigo-900/80 via-purple-900/60 to-slate-900 animate-bg-pan" style="background-size: 200% 200%;"></div>
+  
+  <!-- Parallax Layers -->
+  <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(167,139,250,0.15)_0%,transparent_50%)] animate-bg-float" style="animation-duration: 40s;"></div>
+  <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(56,189,248,0.15)_0%,transparent_50%)] animate-bg-float" style="animation-duration: 50s; animation-direction: reverse;"></div>
+
+  <!-- Starfield Parallax Layer -->
+  <div class="absolute inset-0 z-0 pointer-events-none animate-bg-float" style="animation-duration: 120s;">
+    <div class="star-particle" style="top: 10%; left: 15%; animation-delay: 0s;"></div>
+    <div class="star-particle" style="top: 25%; left: 80%; animation-delay: 1s; width: 1px; height: 1px;"></div>
+    <div class="star-particle" style="top: 70%; left: 5%; animation-delay: 2.5s;"></div>
+    <div class="star-particle" style="top: 85%; left: 90%; animation-delay: 1.5s;"></div>
+    <div class="star-particle" style="top: 50%; left: 50%; animation-delay: 3s; width: 3px; height: 3px;"></div>
+    <div class="star-particle" style="top: 5%; left: 40%; animation-delay: 0.5s;"></div>
+    <div class="star-particle" style="top: 95%; left: 60%; animation-delay: 2s; width: 1px; height: 1px;"></div>
+    <div class="star-particle" style="top: 33%; left: 25%; animation-delay: 1.8s;"></div>
+    <div class="star-particle" style="top: 66%; left: 75%; animation-delay: 3.2s; width: 1px; height: 1px;"></div>
+  </div>
+
+  <!-- Color grading and vignette -->
+  <div class="absolute inset-0 bg-gradient-to-br from-purple-800 to-cyan-700 opacity-20 mix-blend-soft-light"></div>
+  <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_60%,rgba(0,0,0,0.8)_100%)]"></div>
+
+
+  <!-- Particle Effects Container -->
+  <div class="absolute inset-0 pointer-events-none z-50">
+      @for(p of particles(); track p.id) {
+        <div 
+          class="particle" 
+          [style.left]="p.left" 
+          [style.top]="p.top" 
+          [style.width]="p.size"
+          [style.height]="p.size"
+          [style.backgroundColor]="p.backgroundColor" 
+          [style.animationDelay]="p.animationDelay"
+          [style.--tx]="p.tx"
+          [style.--ty]="p.ty"
+          >
+        </div>
+      }
+  </div>
+
+  <!-- Floating Gold -->
+  <div class="absolute inset-0 pointer-events-none z-50">
+    @for(gold of floatingGold(); track gold.id) {
+      <div 
+        class="absolute font-bold text-yellow-300 text-lg whitespace-nowrap animate-floating-damage"
+        [style.left.px]="gold.x"
+        [style.top.px]="gold.y"
+        style="--tx: 0; --ty: -50px; animation-duration: 2s;"
+      >
+        💰 {{ formatNumber(gold.amount) }}
+      </div>
+    }
+  </div>
+
+  <!-- Skill Slash Effect -->
+  @if(gameService().lastSkillUsed(); as skillInfo) {
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-40 overflow-hidden">
+        <div 
+            class="w-full h-1/2 bg-gradient-to-r from-transparent to-transparent animate-skill-slash"
+            [class]="getSkillSlashClass(skillInfo.rarity)">
+        </div>
+    </div>
+  }
+
+
+  <!-- Stage Clear Animation -->
+  @if(gameService().stageCleared()) {
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+      <div class="text-center animate-stage-clear">
+        <h2 class="text-5xl md:text-6xl font-orbitron font-bold text-yellow-300 drop-shadow-[0_5px_5px_rgba(0,0,0,0.7)]">
+          STAGE CLEARED!
+        </h2>
+        <p class="text-2xl text-white drop-shadow-lg">
+          Entering Stage {{ gameService().gameState().stage }}
+        </p>
+      </div>
+    </div>
+  }
+  
+  <!-- Item Drop Notification -->
+  @if(gameService().lastItemDrop(); as item) {
+    <div class="absolute bottom-[40%] left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-drop-notification">
+      <div class="bg-gray-900/90 border-2 rounded-lg p-3 text-center shadow-2xl" [class]="getRarityBorderClass(item.rarity)">
+          <p class="text-sm font-bold text-yellow-300">Item Drop!</p>
+          <h3 class="font-semibold text-lg" [class]="getRarityTextColor(item.rarity)">{{ item.name }}</h3>
+          <p class="text-xs text-gray-400">{{ item.rarity }} {{ item.slot }}</p>
+      </div>
+    </div>
+  }
+
+  <!-- Material Drop Notification -->
+  @if(gameService().lastMaterialDrop(); as materials) {
+    <div class="absolute bottom-[25%] left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-drop-notification">
+      <div class="bg-gray-900/90 border-2 border-green-500 rounded-lg p-3 text-center shadow-2xl">
+          <p class="text-sm font-bold text-green-300">Materials Found!</p>
+          @for(mat of materials; track mat.name) {
+            <h3 class="font-semibold text-lg" [class]="getRarityTextColor(mat.rarity)">+{{mat.quantity}} {{mat.name}}</h3>
+          }
+      </div>
+    </div>
+  }
+
+  <!-- Enemy Area -->
+  <div class="flex-grow flex flex-col items-center justify-center relative z-10 p-4 pt-20">
+    <!-- Enemy Info & Status -->
+    <div class="text-center mb-2 relative">
+      <h2 class="text-xl font-bold font-orbitron drop-shadow-md flex items-center justify-center gap-2" [class]="getEnemyNameColor(gameService().currentEnemy()?.type)">
+        <span>{{ gameService().currentEnemy()?.name }}</span>
+        @if(gameService().currentEnemy()?.type !== 'Normal' && gameService().currentEnemy()?.type !== 'Boss') {
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full border" 
+                  [class]="getEnemyTypeBadgeClass(gameService().currentEnemy()?.type)"
+                  [appTooltip]="getEnemyTypeTooltip(gameService().currentEnemy()?.type)">
+                {{ gameService().currentEnemy()?.type }}
+            </span>
+        }
+      </h2>
+      <p class="text-base text-gray-200">{{ formatNumber(gameService().currentEnemy()?.currentHp ?? 0) }} / {{ formatNumber(gameService().currentEnemy()?.maxHp ?? 0) }}</p>
+
+      <!-- Enemy Status Icons -->
+      <div class="absolute -top-7 left-1/2 -translate-x-1/2 flex gap-2">
+        @if(enemyAbilityState().harden) {
+          <div class="bg-gray-800/80 p-1.5 rounded-full border-2 border-gray-400 animate-pop-in-soft" appTooltip="Harden: Damage taken is greatly reduced.">🛡️</div>
+        }
+        @if(enemyAbilityState().weaken) {
+          <div class="bg-gray-800/80 p-1.5 rounded-full border-2 border-green-500 animate-pop-in-soft" appTooltip="Weaken: All hero damage is reduced.">
+             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+          </div>
+        }
+        @if(enemyAbilityState().frenzy) {
+          <div class="bg-gray-800/80 p-1.5 rounded-full border-2 border-red-500 animate-pop-in-soft" appTooltip="Frenzy: Attacking with increased ferocity.">🔥</div>
+        }
+      </div>
+    </div>
+
+    <!-- Enemy Health Bar -->
+    <div class="w-full max-w-md bg-black/50 rounded-full h-5 border-2 border-gray-500 mb-2 relative overflow-hidden">
+      <!-- "Damage Taken" Bar -->
+      <div class="absolute top-0 left-0 h-full bg-yellow-300/80 rounded-full transition-all duration-300 ease-out" [style.width.%]="delayedEnemyHpPercentage()"></div>
+      <!-- Current HP Bar -->
+      <div class="absolute top-0 left-0 h-full bg-red-600 rounded-full transition-all duration-150 ease-linear" 
+           [style.width.%]="enemyHpPercentage()"
+           [class.animate-hp-bar-hit]="healthBarHit()"></div>
+    </div>
+
+    <!-- Enemy ASCII Art -->
+    <div class="relative">
+      <!-- Frenzy Aura -->
+      @if(enemyAbilityState().frenzy) {
+        <div class="absolute -inset-4 animate-pulse-glow-orange rounded-full"></div>
+      }
+
+      <pre 
+        (click)="onEnemyClick()"
+        class="text-2xl md:text-3xl text-center font-mono cursor-pointer select-none drop-shadow-lg p-4 transition-all duration-100 ease-out hover:scale-105 active:scale-95 leading-tight"
+        [class.animate-enemy-breathe]="!enemyIsCharging() && !enemyIsAttacking()"
+        [class.animate-shake]="gameService().enemyIsShaking()"
+        [class.animate-jiggle]="gameService().heroAttackPulse() && !gameService().enemyIsShaking() && !enemyIsAttacking() && !gameService().lastSkillUsed()"
+        [class.animate-enemy-hit]="gameService().enemyHit()"
+        [class.animate-enemy-charge]="enemyIsCharging()"
+        [class.animate-enemy-attack]="enemyIsAttacking()"
+        [class.text-gray-400]="enemyAbilityState().harden"
+        [class.grayscale]="enemyAbilityState().harden"
+        [class.text-red-400]="!enemyAbilityState().harden"
+      >{{ gameService().currentEnemy()?.asciiArt }}</pre>
+
+      @for(flash of gameService().damageFlashes(); track flash.id) {
+        <!-- Floating Damage Number -->
+        <div 
+            class="absolute top-1/2 font-orbitron font-bold pointer-events-none drop-shadow-lg whitespace-nowrap"
+            [style.left.%]="flash.x"
+            [style.top.px]="flash.y"
+            [class.animate-floating-damage]="flash.type !== 'skill'"
+            [class.animate-skill-damage-pop]="flash.type === 'skill'"
+            [class.text-yellow-300]="flash.type === 'click'"
+            [class.text-3xl]="flash.type === 'click'"
+            [class.text-cyan-300]="flash.type === 'skill'"
+            [class.text-5xl]="flash.type === 'skill'"
+            [class.text-white]="flash.type === 'dps'"
+            [class.text-xl]="flash.type === 'dps'"
+            [class.opacity-50]="enemyAbilityState().harden"
+        >
+            {{ formatNumber(flash.damage) }}
+        </div>
+      }
+    </div>
+
+     <!-- Ability Announcement -->
+    @if(enemyAbilityState().announce; as announceText) {
+      <div class="absolute top-1/3 left-1/2 -translate-x-1/2 z-30 pointer-events-none animate-floating-damage">
+        <div class="px-4 py-2 bg-black/70 rounded-lg border-2 border-purple-500">
+          <p class="text-2xl font-orbitron font-bold drop-shadow-lg"
+             [class.text-red-400]="announceText === 'Frenzy!'"
+             [class.text-gray-300]="announceText === 'Harden!'"
+             [class.text-green-400]="announceText === 'Weaken!'"
+          >
+            {{ announceText }}
+          </p>
+        </div>
+      </div>
+    }
+
+  </div>
+
+  <!-- Combat Controls -->
+  <div class="relative z-10 p-2 bg-black/30 backdrop-blur-sm flex justify-center items-center gap-4">
+    <!-- Core Stats -->
+    <div class="bg-gray-900/70 px-3 py-1.5 rounded-full border border-purple-400/80 transition-transform whitespace-nowrap" [class.animate-value-change-pulse]="dpsChanged()">
+        <span class="text-sm font-bold shimmer-text-purple">⚔️ {{ formatNumber(gameService().totalDps()) }} DPS</span>
+    </div>
+
+    <!-- Auto Skill Toggle -->
+    <button (click)="toggleAutoSkill()" 
+            [appTooltip]="gameService().gameState().autoSkillEnabled ? 'Auto-Skill is active' : 'Auto-Skill is disabled. Click to enable.'"
+            class="p-2 rounded-full border flex items-center gap-2 font-semibold transition-all duration-200 transform hover:scale-105 active:scale-95 flex-shrink-0"
+            [class.bg-cyan-500/20]="gameService().gameState().autoSkillEnabled"
+            [class.border-cyan-400]="gameService().gameState().autoSkillEnabled"
+            [class.text-cyan-300]="gameService().gameState().autoSkillEnabled"
+            [class.bg-gray-500/20]="!gameService().gameState().autoSkillEnabled"
+            [class.border-gray-400]="!gameService().gameState().autoSkillEnabled"
+            [class.text-gray-300]="!gameService().gameState().autoSkillEnabled">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 2a.75.75 0 01.75.75v3.504a.75.75 0 01-1.5 0V2.75A.75.75 0 0110 2zM5.293 4.293a.75.75 0 011.06 0l2.475 2.475a.75.75 0 11-1.06 1.06L5.293 5.354a.75.75 0 010-1.06zM2 10a.75.75 0 01.75-.75h3.504a.75.75 0 010 1.5H2.75A.75.75 0 012 10zm3.293 4.646a.75.75 0 010 1.06l-2.475 2.475a.75.75 0 11-1.06-1.06L5.293 14.646a.75.75 0 011.06 0zM10 18a.75.75 0 01-.75-.75v-3.504a.75.75 0 011.5 0V17.25A.75.75 0 0110 18zm4.707-13.707a.75.75 0 010 1.06l-2.475 2.475a.75.75 0 11-1.06-1.06L14.707 5.354a.75.75 0 011.06 0zm3.043 4.943a.75.75 0 01-.75.75h-3.504a.75.75 0 010-1.5h3.504a.75.75 0 01.75.75zm-3.043 4.646a.75.75 0 011.06 0l2.475 2.475a.75.75 0 11-1.06 1.06l-2.475-2.475a.75.75 0 010-1.06z" clip-rule="evenodd" />
+        </svg>
+        <span class="hidden sm:inline text-xs">Auto Skill</span>
+    </button>
+    
+    <!-- Auto DPS Toggle -->
+    <button (click)="toggleAutoDps()" 
+            [appTooltip]="gameService().gameState().autoDpsEnabled ? 'Auto-DPS is active' : 'Auto-DPS is paused. Click to resume.'"
+            class="p-2 rounded-full border flex items-center gap-2 font-semibold transition-all duration-200 transform hover:scale-105 active:scale-95 flex-shrink-0"
+            [class.bg-green-500/20]="gameService().gameState().autoDpsEnabled"
+            [class.border-green-400]="gameService().gameState().autoDpsEnabled"
+            [class.text-green-300]="gameService().gameState().autoDpsEnabled"
+            [class.bg-red-500/20]="!gameService().gameState().autoDpsEnabled"
+            [class.border-red-400]="!gameService().gameState().autoDpsEnabled"
+            [class.text-red-300]="!gameService().gameState().autoDpsEnabled">
+        @if(gameService().gameState().autoDpsEnabled) {
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M4.555 5.168A1 1 0 003 6v8a1 1 0 001.555.832L10 11.202V14a1 1 0 001.555.832l6-4a1 1 0 000-1.664l-6-4A1 1 0 0010 6v2.798L4.555 5.168z" /></svg>
+        } @else {
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 3a1 1 0 012 0v5.5a.5.5 0 001 0V4a1 1 0 112 0v4.5a.5.5 0 001 0V6a1 1 0 112 0v5a7 7 0 11-14 0V9a1 1 0 012 0v2.5a.5.5 0 001 0V3z" clip-rule="evenodd" /></svg>
+        }
+        <span class="hidden sm:inline text-xs">Auto DPS</span>
+    </button>
+  </div>
+
+  <!-- Heroes Area -->
+  <div class="relative z-10 p-2 bg-black/30 backdrop-blur-sm">
+    <div class="flex justify-center items-end flex-wrap gap-2">
+      @for (hero of gameService().activeHeroes(); track hero.id) {
+        <div class="flex flex-col items-center group" [appTooltip]="hero.name + ' (Lvl ' + hero.level + ')'">
+          <!-- Main Portrait -->
+          <div (click)="activateSkill(hero.id)"
+                class="relative w-14 h-14 rounded-lg border-2 flex items-center justify-center font-bold text-xl transition-all duration-200 overflow-hidden shadow-lg"
+                [class]="getRarityBorderClass(hero.rarity)"
+                [class.animate-skill-ready]="hero.skillReady"
+                [class.animate-skill-ready-breathe]="hero.skillReady"
+                [class.cursor-pointer]="hero.skillReady"
+                [class.hover:scale-110]="hero.skillReady"
+                [class.active:scale-105]="hero.skillReady"
+                [class.hover:border-white]="hero.skillReady"
+                [class.animate-skill-activate-flash]="activatingSkillHeroId() === hero.id"
+                [class]="getRarityBgClass(hero.rarity)"
+                [class.animate-hero-attack]="gameService().heroAttackPulse()"
+                >
+
+              <!-- Initials -->
+              <span class="font-orbitron text-2xl text-white drop-shadow-md z-10">
+                  {{ hero.name.charAt(0) }}{{ hero.name.split(' ')[1]?.charAt(0) || '' }}
+              </span>
+
+              <!-- Level Badge -->
+              <div class="absolute -top-1 -left-1 bg-black/70 px-1.5 py-0.5 rounded-br-md z-20">
+                  <span class="text-xs font-bold text-gray-300">Lvl {{ hero.level }}</span>
+              </div>
+              
+              <!-- Skill Ready Overlay -->
+              @if(hero.skillReady) {
+                  <div class="absolute inset-0 bg-black/50 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span class="text-sm font-bold text-cyan-300">READY</span>
+                  </div>
+              }
+          </div>
+
+          <!-- Skill Charge Bar -->
+          <div class="w-14 h-1.5 bg-black/50 rounded-full mt-1 overflow-hidden border border-gray-600">
+              <div class="h-full bg-cyan-400 rounded-full" [style.width.%]="hero.skillCharge"></div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

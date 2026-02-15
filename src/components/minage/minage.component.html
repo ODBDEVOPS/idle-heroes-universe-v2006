@@ -1,0 +1,81 @@
+<div class="h-full w-full relative overflow-hidden flex flex-col p-4 bg-gray-900 animate-fadeIn">
+  <div class="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-700/40 to-black opacity-80"></div>
+  
+  <header class="relative z-10 text-center mb-4">
+     <button (click)="backToProfessions()" class="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-700/50 hover:bg-gray-600/50 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+      Back
+    </button>
+    <h1 class="text-4xl font-orbitron text-gray-300 drop-shadow-lg">Minage (Mining)</h1>
+  </header>
+
+  <main class="relative z-10 flex-grow grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pr-2">
+    <div class="bg-black/30 p-4 rounded-xl border border-gray-700/50 flex flex-col">
+      <h2 class="text-xl font-orbitron text-gray-300 text-center mb-3">Your Ores & Stones</h2>
+      <div class="flex-grow overflow-y-auto space-y-2">
+        @for(mat of materials(); track mat.id) {
+          @if(mat.count > 0) {
+            <div class="p-2 rounded-lg bg-gray-900/50 flex justify-between items-center">
+              <p class="font-semibold" [class]="getRarityTextColor(mat.rarity)">{{ mat.name }}</p>
+              <p class="font-bold text-white">{{ mat.count }}</p>
+            </div>
+          }
+        }
+        @if(!hasMaterials()) {
+          <p class="text-center text-gray-500 italic py-8">You have no ores or stones. Defeat 'Minerals' type enemies or use the mine to gather them.</p>
+        }
+      </div>
+    </div>
+    <div class="bg-black/30 p-6 rounded-xl border border-gray-700/50 flex flex-col items-center justify-center text-center relative">
+      <h2 class="text-2xl font-orbitron text-gray-300 mb-4">Ore Vein</h2>
+      
+      <!-- Mining Notifications -->
+      <div class="absolute top-4 left-0 right-0 h-24 pointer-events-none">
+        @for (resource of minedResources(); track resource.id) {
+          <div class="absolute left-1/2 -translate-x-1/2 font-bold animate-resource-float" [class]="getRarityTextColor(resource.rarity)">
+            {{ resource.name }}
+          </div>
+        }
+      </div>
+
+      <!-- Health Bar -->
+      <div class="w-full max-w-xs mb-4">
+        <div class="w-full bg-gray-700 rounded-full h-4 border-2 border-gray-500 relative">
+          <div class="bg-gradient-to-r from-red-500 to-orange-500 h-full rounded-full transition-all duration-150" [style.width.%]="rockHealth() / MAX_ROCK_HEALTH * 100"></div>
+          <span class="absolute inset-0 text-center text-xs font-bold text-white leading-4">{{ rockHealth() }} / {{ MAX_ROCK_HEALTH }}</span>
+        </div>
+      </div>
+
+      <!-- Rock & Effects Container -->
+      <div class="relative w-64 h-64 flex items-center justify-center">
+        <!-- Cooldown Overlay -->
+        @if (cooldownTimer() > 0) {
+          <div class="absolute inset-0 bg-black/70 rounded-full flex flex-col items-center justify-center z-20 animate-fadeIn">
+            <p class="text-gray-400">New vein forming...</p>
+            <p class="text-3xl font-orbitron text-white">{{ cooldownTimer() }}s</p>
+          </div>
+        }
+        
+        <!-- Click Effects -->
+        @for (effect of clickEffects(); track effect.id) {
+          <div class="absolute text-3xl text-white/80 pointer-events-none z-10 animate-pickaxe-hit" [style.left.px]="effect.x - 20" [style.top.px]="effect.y - 20">
+            ⛏️
+          </div>
+        }
+
+        <!-- The Rock -->
+        <div (click)="onRockClick($event)" class="w-56 h-56 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 border-4 border-gray-500 shadow-2xl transition-transform duration-100 active:scale-95"
+             [class.cursor-pointer]="rockHealth() > 0 && cooldownTimer() === 0"
+             [class.cursor-not-allowed]="rockHealth() <= 0 || cooldownTimer() > 0"
+             [class.opacity-40]="rockHealth() <= 0"
+             [class.animate-shake]="isRockShaking()">
+          <!-- Rock texture/details -->
+          <div class="absolute top-1/4 left-1/4 w-8 h-8 bg-gray-500/50 rounded-md -rotate-45"></div>
+          <div class="absolute bottom-1/3 right-1/4 w-12 h-10 bg-gray-500/50 rounded-sm rotate-12"></div>
+        </div>
+      </div>
+      
+      <p class="text-sm text-gray-500 mt-4">Click the rock to mine for resources.</p>
+    </div>
+  </main>
+</div>
